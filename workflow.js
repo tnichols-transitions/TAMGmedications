@@ -19,7 +19,8 @@
     { id: 'can', label: 'Cannabis', pw: 'can' }
   ];
   const RULESET = 'Rule set v1.1 — approved by medical director 2026-11-19';
-  const STEPS = ['Intake', 'Safety screen', 'Withdrawal scoring', 'Clinical factors', 'Recommendations', 'Summary'];
+  const STEPS = ['Intake', 'Safety & history', 'Withdrawal scores', 'Treatment plan'];
+  const LAST = STEPS.length - 1;
 
   /* ── Instruments ── */
   const CIWA = [
@@ -362,6 +363,7 @@
     const a = acuity();
     return `<div class="wf-card"><div class="wf-h" style="color:#ef5350">Emergent — escalate immediately</div><div class="wf-hint">Any one of these stops the workflow.</div><div class="wf-checks">${EMERGENT.map(([k, l]) => check('emerg', k, l, 'red')).join('')}</div></div>
       <div class="wf-card"><div class="wf-h" style="color:var(--warn)">Requires prescriber review</div><div class="wf-checks">${REVIEW.map(([k, l]) => check('review', k, l)).join('')}</div></div>
+      ${FACTORS.map((g) => `<div class="wf-card"><div class="wf-h">${g.g}</div><div class="wf-hint">Check any that apply — these change which medications are recommended.</div><div class="wf-checks cols">${g.items.map(([k, l]) => check('f', k, l)).join('')}</div></div>`).join('')}
       ${acuityBanner(a)}`;
   }
 
@@ -413,59 +415,88 @@
     return parts.join('');
   }
 
-  function vStep3() {
-    return FACTORS.map((g) => `<div class="wf-card"><div class="wf-h">${g.g}</div><div class="wf-checks cols">${g.items.map(([k, l]) => check('f', k, l)).join('')}</div></div>`).join('');
+  /* ── Treatment plan ──
+     Built from the same rule set: every rule item that names medications is
+     regrouped by medication. A medication's tier is the most restrictive that
+     applies (any "avoid" wins), otherwise its strongest recommendation.
+     Every rule text that mentions it is kept as its rationale. */
+  const TIERS = [
+    { id: 'go', title: 'Recommended', hint: 'Suggested for this patient based on the answers given.', color: '#81c995' },
+    { id: 'caution', title: 'Conditional — prescriber decision', hint: 'Appropriate only if the conditions in the notes are met.', color: 'var(--warn)' },
+    { id: 'info', title: 'Also consider', hint: 'Options or adjuncts depending on symptoms and preference.', color: 'var(--accent)' },
+    { id: 'avoid', title: 'Avoid', hint: 'Contraindicated or not advised for this patient.', color: '#ef5350' }
+  ];
+  const RANK = { avoid: 4, go: 3, caution: 2, alert: 2, info: 1 };
+  const strip = (h) => h.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const lead = (h) => { const m = /<b>([^<]+)<\/b>/.exec(h); return m ? m[1].replace(/[:.]\s*$/, '').trim() : ''; };
+
+  function buildPlan() {
+    const meds = new Map(), actions = [];
+    const add = (it, context, col) => {
+      if (!it.meds || !it.meds.length) { actions.push({ it, context, col }); return; }
+      it.meds.forEach((m) => {
+        let r = meds.get(m);
+        if (!r) { r = { name: m, col, rank: 0, lvl: 'info', contexts: [], notes: [] }; meds.set(m, r); }
+        const lvl = it.lvl === 'alert' ? 'caution' : it.lvl;
+        if (RANK[lvl] > r.rank) { r.rank = RANK[lvl]; r.lvl = lvl; }
+        if (!r.contexts.includes(context)) r.contexts.push(context);
+        if (!r.notes.includes(it.text)) r.notes.push(it.text);
+      });
+    };
+    chosen().forEach((s) => RULES[s.id]().forEach((sec) => sec.items.forEach((it) => add(it, `${s.label} · ${sec.title}`, COL[s.id]))));
+    rulesCooccurring().forEach((it) => add(it, lead(it.text) || 'Co-occurring condition', '#ce93d8'));
+    const tiers = {};
+    TIERS.forEach((t) => { tiers[t.id] = []; });
+    meds.forEach((r) => tiers[r.lvl].push(r));
+    return { tiers, actions };
   }
 
-  function vStep4() {
+  function medRow(r) {
+    const known = knownMeds().includes(r.name.toLowerCase());
+    const name = known
+      ? `<button class="pw-med wf-medlink" data-med="${esc(r.name)}" style="background:${r.col}1f;color:${r.col};border-color:${r.col}55" title="Open in Medication Reference">${esc(r.name)} ↗</button>`
+      : `<span class="pw-med" style="background:var(--tag-bg);color:var(--text)">${esc(r.name)}</span>`;
+    return `<div class="wf-plan-row"><div class="wf-plan-top">${name}<span class="wf-plan-for">${esc(r.contexts.join('; '))}</span></div>
+      <details class="wf-plan-why"><summary>Why</summary><ul>${r.notes.map((n) => `<li>${n}</li>`).join('')}</ul></details></div>`;
+  }
+
+  function vPlan() {
     const a = acuity();
     let html = acuityBanner(a);
     if (a.lvl === 'bad') return html;
-    chosen().forEach((s) => {
-      const col = COL[s.id];
-      const secs = RULES[s.id]();
-      html += `<div class="wf-card wf-path" style="border-top:3px solid ${col}"><div class="wf-path-head"><div class="wf-h" style="color:${col};margin:0">${s.label}</div><button class="wf-link" data-pw="${s.pw}">Full pathway →</button></div>
-        ${secs.map((sec) => `<div class="pw-section-title" style="margin-top:1rem">${sec.title}</div>${sec.items.map((it) => itemHTML(it, col)).join('')}`).join('')}</div>`;
+    if (!chosen().length) return html + '<div class="wf-card"><div class="wf-hint">Select at least one substance in Intake.</div></div>';
+    const p = buildPlan();
+    TIERS.forEach((t) => {
+      const rows = p.tiers[t.id];
+      if (!rows.length) return;
+      html += `<div class="wf-card wf-plan" style="border-left:3px solid ${t.color}"><div class="wf-h" style="color:${t.color}">${t.title} <span class="wf-count">${rows.length}</span></div><div class="wf-hint">${t.hint}</div>${rows.map(medRow).join('')}</div>`;
     });
-    const co = rulesCooccurring();
-    if (co.length) html += `<div class="wf-card" style="border-top:3px solid #ce93d8"><div class="wf-h" style="color:#ce93d8">Co-occurring conditions</div>${co.map((it) => itemHTML(it, '#ce93d8')).join('')}</div>`;
-    if (!chosen().length) html += '<div class="wf-card"><div class="wf-hint">Select at least one substance in Intake.</div></div>';
-    html += `<div class="wf-legend">${Object.values(LVL).map((L) => `<span><i style="color:${L.color};border-color:${L.color}">${L.icon}</i>${L.label}</span>`).join('')}</div>`;
+    if (p.actions.length) html += `<div class="wf-card"><div class="wf-h">Actions &amp; monitoring</div>${p.actions.map((x) => itemHTML(x.it, x.col)).join('')}</div>`;
+    html += `<div class="wf-card wf-pwlinks"><span class="wf-muted">Full pathways:</span> ${chosen().map((s) => `<button class="wf-link" data-pw="${s.pw}" style="color:${COL[s.id]}">${s.label} →</button>`).join('')}</div>`;
+    html += `<div class="wf-actions"><button class="wf-btn" id="wfCopy">Copy plan</button><button class="wf-btn ghost" id="wfPrint">Print</button><button class="wf-btn ghost danger" id="wfReset">Start new assessment</button></div>`;
     return html;
   }
 
-  function noteText() {
-    const a = acuity();
-    const L = [];
-    const d = new Date();
-    L.push('ADMISSION DECISION-SUPPORT SUMMARY (TAMG Clinical Workflow)');
-    L.push('Generated: ' + d.toLocaleString());
-    L.push('');
+  function planText() {
+    const a = acuity(), L = [];
+    L.push('MEDICATION TREATMENT PLAN (TAMG Clinical Workflow)');
+    L.push('Generated: ' + new Date().toLocaleString());
     L.push('Substances: ' + (chosen().map((s) => s.label + (S.hrs[s.id] ? ` (last use ~${S.hrs[s.id]} h)` : '')).join('; ') || 'none selected'));
-    if (S.subs.oud) {
-      const ox = [S.fentanyl && 'fentanyl', S.methadoneUse && 'methadone'].filter(Boolean);
-      if (ox.length) L.push('Opioid exposure: ' + ox.join(', '));
-    }
-    L.push('Current MOUD: ' + ({ none: 'none', bup: 'buprenorphine', methadone: 'methadone', xrntx: 'XR-naltrexone' })[S.moud]);
-    L.push('Pregnancy: ' + ({ na: 'N/A', no: 'negative', yes: 'PREGNANT', unk: 'unknown — test pending' })[S.preg] + (S.older ? ' | Age ≥65' : ''));
-    L.push('');
-    L.push('ACUITY: ' + a.label.toUpperCase());
-    a.reasons.forEach((r) => L.push('  - ' + r));
+    L.push('Current MOUD: ' + ({ none: 'none', bup: 'buprenorphine', methadone: 'methadone', xrntx: 'XR-naltrexone' })[S.moud] + ' | Pregnancy: ' + ({ na: 'N/A', no: 'negative', yes: 'PREGNANT', unk: 'unknown — test pending' })[S.preg] + (S.older ? ' | Age ≥65' : ''));
     const c = ciwaInfo(), w = cowsInfo();
     if (S.subs.aud && c) L.push(`CIWA-Ar: ${c.total}/67 (${ciwaBand(c.total)[0]})${c.done < c.n ? ` — ${c.done}/${c.n} items` : ''}`);
     if (S.subs.oud && w) L.push(`COWS: ${w.total}/48 (${cowsBand(w.total)[0]})${w.done < w.n ? ` — ${w.done}/${w.n} items` : ''}`);
-    const fac = [];
-    FACTORS.forEach((g) => g.items.forEach(([k, l]) => { if (S.f[k]) fac.push(l); }));
-    if (fac.length) { L.push(''); L.push('Clinical factors:'); fac.forEach((x) => L.push('  - ' + x)); }
+    L.push('');
+    L.push('ACUITY: ' + a.label.toUpperCase());
+    a.reasons.forEach((r) => L.push('  - ' + r));
     if (a.lvl !== 'bad') {
-      const strip = (h) => h.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-      const tag = { go: '[SUGGESTED]', caution: '[CAUTION]', avoid: '[AVOID]', info: '[CONSIDER]', alert: '[ACTION]' };
-      chosen().forEach((s) => {
-        L.push(''); L.push(s.label.toUpperCase());
-        RULES[s.id]().forEach((sec) => { L.push(' ' + sec.title + ':'); sec.items.forEach((it) => L.push('  ' + tag[it.lvl] + ' ' + strip(it.text))); });
+      const p = buildPlan();
+      TIERS.forEach((t) => {
+        if (!p.tiers[t.id].length) return;
+        L.push(''); L.push(t.title.toUpperCase());
+        p.tiers[t.id].forEach((r) => { L.push(`  • ${r.name} — ${r.contexts.join('; ')}`); r.notes.forEach((n) => L.push('      ' + strip(n))); });
       });
-      const co = rulesCooccurring();
-      if (co.length) { L.push(''); L.push('CO-OCCURRING'); co.forEach((it) => L.push('  ' + tag[it.lvl] + ' ' + strip(it.text))); }
+      if (p.actions.length) { L.push(''); L.push('ACTIONS & MONITORING'); p.actions.forEach((x) => L.push('  • ' + strip(x.it.text))); }
     }
     L.push('');
     L.push('Decision support only — not an order. Dosing, contraindications and interactions to be verified by the prescriber.');
@@ -473,13 +504,7 @@
     return L.join('\n');
   }
 
-  function vStep5() {
-    return `<div class="wf-card"><div class="wf-h">Chart-ready summary</div><div class="wf-hint">Review and edit before pasting into the record. Nothing on this page is saved.</div>
-      <textarea class="wf-note" id="wfNote" spellcheck="false">${esc(noteText())}</textarea>
-      <div class="wf-actions"><button class="wf-btn" id="wfCopy">Copy to clipboard</button><button class="wf-btn ghost" id="wfPrint">Print</button><button class="wf-btn ghost danger" id="wfReset">Start new assessment</button></div></div>`;
-  }
-
-  const VIEWS = [vStep0, vStep1, vStep2, vStep3, vStep4, vStep5];
+  const VIEWS = [vStep0, vStep1, vStep2, vPlan];
 
   function render(keepScroll) {
     const root = document.getElementById('wfRoot');
@@ -488,9 +513,9 @@
     const a = acuity();
     const stop = a.lvl === 'bad' && S.step > 1;
     root.innerHTML = `
-      <div class="pw-header"><div class="pw-title">Clinical Decision Workflow</div><div class="pw-sub">Admission assessment → withdrawal scoring → medication decision support for residential SUD treatment.</div></div>
+      <div class="pw-header"><div class="pw-title">Clinical Decision Workflow</div><div class="pw-sub">Admission assessment → withdrawal scoring → medication treatment plan for residential SUD treatment.</div></div>
       ${stepper()}
-      ${a.lvl !== 'ok' && S.step !== 1 && S.step !== 4 ? `<div class="wf-strip wf-acuity-${a.lvl}"><b>${a.label}</b> — ${a.reasons.length} trigger${a.reasons.length !== 1 ? 's' : ''}. <button class="wf-link" data-go="1">Review</button></div>` : ''}
+      ${a.lvl !== 'ok' && S.step !== 1 && S.step !== LAST ? `<div class="wf-strip wf-acuity-${a.lvl}"><b>${a.label}</b> — ${a.reasons.length} trigger${a.reasons.length !== 1 ? 's' : ''}. <button class="wf-link" data-go="1">Review</button></div>` : ''}
       <div class="wf-view">${stop ? acuityBanner(a) : VIEWS[S.step]()}</div>
       <div class="wf-nav">
         <button class="wf-btn ghost" data-go="${S.step - 1}" ${S.step === 0 ? 'disabled' : ''}>← Back</button>
@@ -521,13 +546,14 @@
     if (t.classList.contains('wf-medlink')) { openMed(t.dataset.med); return; }
     if (t.dataset.pw) { openPathway(t.dataset.pw); return; }
     if (t.id === 'wfCopy') {
-      const ta = document.getElementById('wfNote');
-      const done = () => { t.textContent = 'Copied ✓'; setTimeout(() => { t.textContent = 'Copy to clipboard'; }, 1600); };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done, () => { ta.select(); document.execCommand('copy'); done(); });
-      else { ta.select(); document.execCommand('copy'); done(); }
+      const text = planText();
+      const done = () => { t.textContent = 'Copied ✓'; setTimeout(() => { t.textContent = 'Copy plan'; }, 1600); };
+      const fallback = () => { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done(); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+      else fallback();
       return;
     }
-    if (t.id === 'wfPrint') { document.body.classList.add('wf-printing'); try { window.print(); } catch (err) { /* printing blocked in sandboxed previews */ } setTimeout(() => document.body.classList.remove('wf-printing'), 500); return; }
+    if (t.id === 'wfPrint') { document.querySelectorAll('#wfRoot details').forEach((d) => { d.open = true; }); document.body.classList.add('wf-printing'); try { window.print(); } catch (err) { /* printing blocked in sandboxed previews */ } setTimeout(() => document.body.classList.remove('wf-printing'), 500); return; }
     if (t.id === 'wfReset') {
       if (t.dataset.armed) { S = fresh(); render(); return; }
       t.dataset.armed = '1'; t.textContent = 'Click again to clear everything';
@@ -658,8 +684,16 @@
   .wf-legend{display:flex;flex-wrap:wrap;gap:.5rem 1.1rem;font-size:11px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;margin:.25rem 0 0}
   .wf-legend span{display:inline-flex;align-items:center;gap:.35rem}
   .wf-legend i{font-style:normal;width:16px;height:16px;border-radius:50%;border:1.5px solid;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
-  .wf-note{width:100%;min-height:380px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:.8rem;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.55;resize:vertical;outline:none}
-  .wf-note:focus{border-color:var(--accent)}
+  .wf-count{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--text-muted);margin-left:.3rem}
+  .wf-plan-row{padding:.55rem 0;border-top:1px solid var(--border)}
+  .wf-plan-top{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .7rem}
+  .wf-plan-for{font-size:12px;color:var(--text-dim)}
+  .wf-plan-why{margin-top:.3rem;font-size:12px;color:var(--text-dim)}
+  .wf-plan-why summary{cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-muted);width:max-content}
+  .wf-plan-why ul{margin:.35rem 0 0 1.1rem;line-height:1.55}
+  .wf-plan-why li + li{margin-top:.25rem}
+  .wf-plan-why b{color:var(--text);font-weight:500}
+  .wf-pwlinks{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .9rem;font-size:12px}
   .wf-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
   .wf-nav{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-top:.5rem}
   .wf-nav-mid{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted)}
@@ -671,9 +705,10 @@
   .wf-btn.danger:hover{color:#ef5350;border-color:#ef5350}
   .tab-bar{overflow-x:auto;scrollbar-width:none}.tab-bar::-webkit-scrollbar{display:none}
   @media(max-width:700px){.tab-btn{padding:.6rem .8rem}.wf-row2{grid-template-columns:1fr}.wf-step-l{display:none}.wf-step.cur .wf-step-l{display:inline}.wf-scs{flex-wrap:wrap}.wf-sc{min-width:38px;height:36px}.wf-score{min-width:90px}.wf-checks.cols{grid-template-columns:1fr}}
-  @media print{body.wf-printing .site-header,body.wf-printing .wf-steps,body.wf-printing .wf-nav,body.wf-printing .wf-actions,body.wf-printing .wf-hint,body.wf-printing .wf-strip,body.wf-printing .tab-panel:not(#tab-workflow),body.wf-printing .pw-header,body.wf-printing .footer{display:none!important}
-    body.wf-printing .wf-note{border:none;min-height:0;height:auto;color:#000;background:#fff;font-size:11px}
-    body.wf-printing .wf-card{border:none;padding:0}}
+  @media print{body.wf-printing .site-header,body.wf-printing .wf-steps,body.wf-printing .wf-nav,body.wf-printing .wf-actions,body.wf-printing .wf-hint,body.wf-printing .wf-strip,body.wf-printing .wf-pwlinks,body.wf-printing .tab-panel:not(#tab-workflow),body.wf-printing .pw-header,body.wf-printing .footer{display:none!important}
+    body.wf-printing,body.wf-printing #wfRoot,body.wf-printing .wf-card,body.wf-printing .wf-acuity{background:#fff!important}
+    body.wf-printing #wfRoot *{color:#000!important}
+    body.wf-printing .wf-card{padding:.4rem .6rem;break-inside:avoid}}
   `;
 
   /* ── Mount ── */

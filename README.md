@@ -15,11 +15,13 @@ Clinical reference for residential SUD treatment, deployed on Netlify at https:/
 
 ## Clinical Workflow
 
-Six steps: Intake → Safety screen → Withdrawal scoring (CIWA-Ar, COWS) → Clinical factors → Recommendations → Chart-ready summary.
+Four steps: Intake → Safety & history (safety screen + clinical factors) → Withdrawal scores (CIWA-Ar, COWS) → **Treatment plan**.
+
+The treatment plan lists each medication once, grouped as **Recommended**, **Conditional — prescriber decision**, **Also consider** or **Avoid**, with what it is for and an expandable "Why" showing every rule that mentions it. If any rule says to avoid a medication, it is listed under Avoid. Non-medication actions (escalation, monitoring) are listed separately. The plan can be copied as text or printed.
 
 - Rule-based decision support only; no doses are given.
 - Nothing entered is stored or transmitted; state lives in memory and clears on reload.
-- Medication names link into the Medication Reference tab; "Full pathway →" opens the matching Treatment Pathway.
+- Medication names link into the Medication Reference tab; the "Full pathways" links open the matching Treatment Pathway.
 
 ### Rule set
 
