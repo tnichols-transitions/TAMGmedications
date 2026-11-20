@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TAMG Medication Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1117;--surface:#181c27;--surface2:#1e2235;--border:#2a3050;--text:#e8eaf2;--text-dim:#8a90a8;--text-muted:#545c78;--warn:#ff8a65;--tag-bg:#252b3e;--accent:#90caf9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f5f6fa;--surface:#fff;--surface2:#eef0f7;--border:#d4d8ec;--text:#1a1e2e;--text-dim:#4a5070;--text-muted:#8a90a8;--tag-bg:#e8eaf5;--warn:#c0390b;--accent:#1a5faf;}}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:14px;line-height:1.6;min-height:100%;}
+
+/* ── Global header ── */
+.site-header{background:var(--surface);border-bottom:1px solid var(--border);padding:1.25rem 1.5rem 0;}
+.site-header-top{display:flex;align-items:flex-end;gap:1rem;max-width:1100px;margin:0 auto;}
+.site-title-block{flex:1;}
+.site-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:.08em;margin-bottom:.3rem;}
+.site-title{font-size:1.45rem;font-weight:600;line-height:1.2;}
+.site-title span{font-weight:300;color:var(--text-dim);}
+.site-sub{font-size:12px;color:var(--text-dim);margin-top:.25rem;}
+
+/* ── Tab bar ── */
+.tab-bar{display:flex;gap:0;max-width:1100px;margin:1rem auto 0;border-bottom:none;}
+.tab-btn{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:.6rem 1.25rem;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;background:transparent;color:var(--text-muted);transition:all .15s;white-space:nowrap;}
+.tab-btn:hover{color:var(--text);background:var(--surface2);}
+.tab-btn.active{background:var(--bg);color:var(--text);border-color:var(--border);border-bottom-color:var(--bg);font-weight:500;}
+
+/* ── Page wrapper ── */
+.page{max-width:1100px;margin:0 auto;padding:1.75rem 1.25rem 4rem;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── Med reference styles ── */
+.controls{display:flex;gap:.75rem;margin-bottom:1.75rem;flex-wrap:wrap;align-items:center;}
+.search-wrap{position:relative;flex:1;min-width:200px;}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;}
+input[type=search]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:13px;padding:.5rem .75rem .5rem 2.25rem;outline:none;transition:border-color .15s;}
+input[type=search]:focus{border-color:var(--accent);}
+input[type=search]::placeholder{color:var(--text-muted);}
+.filter-pills{display:flex;gap:.4rem;flex-wrap:wrap;}
+.pill{font-size:11px;font-family:'IBM Plex Mono',monospace;padding:.3rem .7rem;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.pill:hover{border-color:var(--text-dim);color:var(--text);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s,transform .15s;}
+.card:hover{border-color:var(--text-muted);transform:translateY(-1px);}
+.card-accent{height:3px;width:100%;}
+.card-body{padding:1rem 1.1rem 1.1rem;flex:1;display:flex;flex-direction:column;gap:.65rem;}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;}
+.drug-name{font-size:15px;font-weight:600;line-height:1.2;}
+.drug-brand{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);margin-top:1px;}
+.cat-badge{font-size:10px;font-family:'IBM Plex Mono',monospace;padding:.2rem .55rem;border-radius:4px;white-space:nowrap;flex-shrink:0;font-weight:500;}
+.divider{height:1px;background:var(--border);}
+.field-label{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);letter-spacing:.06em;margin-bottom:.2rem;text-transform:uppercase;}
+.field-text{font-size:12.5px;color:var(--text-dim);line-height:1.55;}
+.tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.1rem;}
+.tag{font-size:11px;background:var(--tag-bg);color:var(--text-dim);padding:.15rem .5rem;border-radius:4px;font-family:'IBM Plex Mono',monospace;}
+.warn-row{display:flex;gap:.4rem;align-items:flex-start;font-size:12px;color:var(--warn);line-height:1.4;}
+.warn-row svg{flex-shrink:0;margin-top:1px;}
+.section-header{grid-column:1/-1;display:flex;align-items:center;gap:.75rem;margin-top:1rem;margin-bottom:.25rem;}
+.section-header-line{flex:1;height:1px;background:var(--border);}
+.section-header-label{font-size:11px;font-family:'IBM Plex Mono',monospace;white-space:nowrap;font-weight:500;}
+.empty{grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-size:13px;}
+.count-label{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:1.5rem;}
+
+/* ── Treatment Pathways ── */
+.pathway-nav{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.75rem;}
+.pnav-btn{font-size:12px;font-family:'IBM Plex Mono',monospace;padding:.4rem 1rem;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.pnav-btn:hover{color:var(--text);border-color:var(--text-dim);}
+.pnav-btn.active{font-weight:600;border-color:transparent;}
+
+.pathway-panel{display:none;}
+.pathway-panel.active{display:block;}
+
+.pw-header{margin-bottom:1.5rem;}
+.pw-title{font-size:1.25rem;font-weight:600;margin-bottom:.25rem;}
+.pw-sub{font-size:12.5px;color:var(--text-dim);}
+
+/* Phase cards */
+.phases{display:flex;flex-direction:column;gap:1rem;}
+.phase{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.phase-header{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;cursor:pointer;user-select:none;}
+.phase-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;font-family:'IBM Plex Mono',monospace;}
+.phase-title-wrap{flex:1;}
+.phase-title{font-size:14px;font-weight:600;}
+.phase-timing{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);margin-top:1px;}
+.phase-chevron{transition:transform .2s;color:var(--text-muted);}
+.phase.open .phase-chevron{transform:rotate(180deg);}
+.phase-body{display:none;padding:0 1rem 1rem;border-top:1px solid var(--border);}
+.phase.open .phase-body{display:block;}
+
+.pw-section{margin-top:1rem;}
+.pw-section-title{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:.5rem;}
+.pw-items{display:flex;flex-direction:column;gap:.4rem;}
+.pw-item{display:flex;gap:.6rem;align-items:flex-start;font-size:12.5px;color:var(--text-dim);line-height:1.5;}
+.pw-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:.45rem;}
+.pw-item b{color:var(--text);font-weight:500;}
+
+.pw-meds{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem;}
+.pw-med{font-size:11px;font-family:'IBM Plex Mono',monospace;padding:.25rem .6rem;border-radius:5px;font-weight:500;border:1px solid transparent;}
+
+.pw-note{margin-top:1rem;padding:.65rem .85rem;border-radius:6px;font-size:12px;color:var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);border:1px solid color-mix(in srgb,var(--warn) 25%,transparent);line-height:1.5;}
+.pw-note b{font-weight:600;}
+
+.pw-goals{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem;}
+.pw-goal{font-size:11.5px;background:var(--tag-bg);color:var(--text-dim);padding:.3rem .65rem;border-radius:5px;}
+
+/* footer */
+.footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);line-height:1.6;}
+
+@media(max-width:600px){.grid{grid-template-columns:1fr;}.site-title{font-size:1.15rem;}.phases{gap:.75rem;}}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <div class="site-header-top">
+    <div class="site-title-block">
+      <div class="site-label">Clinical Reference · Residential SUD Treatment</div>
+      <div class="site-title">TAMG <span>Medication Reference</span></div>
+      <div class="site-sub">Mechanism of action · Primary purpose · Treatment pathways</div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="meds">💊 Medication Reference</button>
+    <button class="tab-btn" data-tab="pathways">🗺 Treatment Pathways</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- ═══════════════ TAB 1: MED REFERENCE ═══════════════ -->
+  <div class="tab-panel active" id="tab-meds">
+    <div class="controls">
+      <div class="search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+        <input type="search" id="searchInput" placeholder="Search by name, brand, or use..." autocomplete="off">
+      </div>
+      <div class="filter-pills" id="filterPills">
+        <button class="pill" data-filter="all">All</button>
+        <button class="pill" data-filter="withdrawal">Withdrawal</button>
+        <button class="pill" data-filter="opioid">Opioid Use</button>
+        <button class="pill" data-filter="alcohol">Alcohol Use</button>
+        <button class="pill" data-filter="antidepressant">Antidepressants</button>
+        <button class="pill" data-filter="mood">Mood Stabilizers</button>
+        <button class="pill" data-filter="antipsychotic">Antipsychotics</button>
+        <button class="pill" data-filter="sleep-anxiety">Sleep / Anxiety</button>
+      </div>
+    </div>
+    <div class="count-label" id="countLabel"></div>
+    <div class="grid" id="medGrid"></div>
+    <div class="footer"><strong>Clinical reference only.</strong> This guide does not replace clinical judgment, prescriber review, or individualized treatment planning. Dosing, contraindications, and interactions must be verified for each patient.</div>
+  </div>
+
+  <!-- ═══════════════ TAB 2: TREATMENT PATHWAYS ═══════════════ -->
+  <div class="tab-panel" id="tab-pathways">
+    <div class="pathway-nav">
+      <button class="pnav-btn active" data-pw="aud">Alcohol Use Disorder</button>
+      <button class="pnav-btn" data-pw="oud">Opioid Use Disorder</button>
+      <button class="pnav-btn" data-pw="stim">Stimulant Use Disorders</button>
+      <button class="pnav-btn" data-pw="bzd">Benzodiazepine Use Disorder</button>
+      <button class="pnav-btn" data-pw="can">Cannabis Use Disorder</button>
+    </div>
+    <div id="pathwayRoot"></div>
+  </div>
+
+</div>
+
+<script>
+/* ── Pathway content ── */
+const PATHWAYS = {
+  aud: {
+    title: 'Alcohol Use Disorder',
+    sub: 'Stabilization → early recovery → maintenance, with co-occurring disorders addressed throughout.',
+    phases: [
+      { title: 'Medical Stabilization & Withdrawal', timing: 'Days 1–7', sections: [
+        { t: 'Key Assessments', items: [
+          '<b>CIWA-Ar</b> on admission and per protocol; symptom-triggered dosing guided by score.',
+          '<b>Seizure and delirium tremens risk:</b> prior withdrawal seizures or DTs, heavy daily use, older age, concurrent sedative use, abnormal labs.',
+          'Vital signs, hydration, electrolytes (Mg, K, phosphate), LFTs, glucose.',
+          'Screen for Wernicke encephalopathy: confusion, ataxia, eye-movement abnormalities.'
+        ]},
+        { t: 'Medications', meds: ['Diazepam', 'Lorazepam', 'Phenobarbital', 'Thiamine', 'Folate', 'Gabapentin', 'Baclofen'], items: [
+          '<b>Benzodiazepine</b> per CIWA-Ar protocol — diazepam when hepatic function is normal; lorazepam in liver disease or older adults.',
+          '<b>Thiamine before any glucose</b>, plus folate and a multivitamin.',
+          'Phenobarbital for benzodiazepine-resistant withdrawal in monitored settings; gabapentin or baclofen as adjuncts for mild withdrawal.'
+        ]}
+      ], note: '<b>⚠ Escalate</b> for seizures, hallucinations with autonomic instability, CIWA-Ar ≥19 not responding to treatment, or unstable vitals.' },
+      { title: 'Early Recovery', timing: 'Weeks 1–4', sections: [
+        { t: 'Medications', meds: ['Naltrexone', 'Acamprosate', 'Gabapentin', 'Topiramate'], items: [
+          'Start relapse-prevention medication during residential stay so it is established before discharge.',
+          '<b>Naltrexone</b> (oral or monthly injection) reduces craving and heavy drinking — not with opioids or MOUD.',
+          '<b>Acamprosate</b> supports abstinence; safe in liver disease, dose-adjust for renal impairment.',
+          'Gabapentin and topiramate are off-label options with supporting evidence.'
+        ]},
+        { t: 'Psychosocial Components', items: [
+          'Motivational interviewing, CBT for relapse prevention, mutual-help orientation (AA, SMART Recovery).',
+          'Sleep hygiene and management of post-acute withdrawal symptoms.'
+        ]}
+      ]},
+      { title: 'Maintenance', timing: 'Month 1 onward', sections: [
+        { t: 'Medications', meds: ['Naltrexone', 'Acamprosate', 'Disulfiram'], items: [
+          'Continue naltrexone or acamprosate for at least 6–12 months.',
+          '<b>Disulfiram</b> only for motivated patients with supervised dosing; avoid in cardiac disease, psychosis, pregnancy or significant liver disease.'
+        ]},
+        { t: 'Goals', goals: ['Sustained abstinence or reduced heavy drinking', 'Linkage to outpatient prescriber', 'Relapse-prevention plan', 'Recovery supports in place'] }
+      ]},
+      { title: 'Co-occurring Disorders', timing: 'Throughout', sections: [
+        { t: 'Medications', meds: ['Sertraline', 'Buspirone', 'Hydroxyzine', 'Trazodone', 'Prazosin', 'Lithium', 'Valproate', 'Bupropion', 'Mirtazapine'], items: [
+          '<b>Depression / anxiety:</b> SSRIs/SNRIs (sertraline), buspirone, hydroxyzine. Reassess after 2–4 weeks of abstinence.',
+          '<b>Insomnia:</b> trazodone, hydroxyzine or mirtazapine; avoid benzodiazepines and Z-drugs.',
+          '<b>PTSD:</b> sertraline; prazosin for nightmares.',
+          '<b>Bipolar disorder:</b> lithium or valproate per psychiatry (valproate caution in liver disease).',
+          'Bupropion is an option for depression only when there is no seizure risk.'
+        ]}
+      ]}
+    ]
+  },
+  oud: {
+    title: 'Opioid Use Disorder',
+    sub: 'MOUD is the standard of care. Withdrawal management alone carries high overdose risk.',
+    phases: [
+      { title: 'Withdrawal Assessment', timing: 'Admission – Day 3', sections: [
+        { t: 'Key Assessments', items: [
+          '<b>COWS</b> on admission and per protocol.',
+          'Substance history: type of opioid, route, last use, <b>fentanyl exposure</b>, current MOUD and dose.',
+          'Pregnancy test, overdose history, co-use of alcohol or sedatives.'
+        ]},
+        { t: 'Symptomatic Medications', meds: ['Clonidine', 'Ondansetron', 'Loperamide', 'Dicyclomine', 'Hydroxyzine'], items: [
+          'Clonidine for autonomic symptoms (hold for low BP or HR); ondansetron, loperamide, dicyclomine; NSAIDs or acetaminophen for aches.'
+        ]}
+      ], note: '<b>⚠ Fentanyl:</b> long tissue storage makes timing of withdrawal unpredictable and increases precipitated-withdrawal risk with standard buprenorphine induction.' },
+      { title: 'MOUD Induction', timing: 'Days 1–7', sections: [
+        { t: 'Medications', meds: ['Buprenorphine', 'Methadone', 'Naltrexone'], items: [
+          '<b>Buprenorphine/naloxone:</b> standard induction at objective withdrawal (COWS ≥8–12).',
+          '<b>Low-dose (Bernese) induction:</b> small overlapping buprenorphine doses without stopping full agonist — preferred with fentanyl or methadone exposure.',
+          '<b>Methadone:</b> through an OTP; consider for prior buprenorphine failure or very high tolerance. Monitor QTc.',
+          '<b>XR-naltrexone (Vivitrol):</b> requires 7–10 opioid-free days; for patients preferring non-agonist treatment.'
+        ]}
+      ]},
+      { title: 'Maintenance', timing: 'Ongoing', sections: [
+        { t: 'Key Points', meds: ['Buprenorphine', 'Naloxone'], items: [
+          'MOUD is continued <b>indefinitely</b>; tapering is patient-led and not a treatment goal.',
+          'Extended-release buprenorphine (Sublocade) is an option for adherence or diversion concerns.',
+          '<b>Naloxone kit for every patient at discharge</b>; counsel on reduced tolerance.'
+        ]},
+        { t: 'Goals', goals: ['Stable MOUD dose', 'Outpatient prescriber or OTP linked before discharge', 'Naloxone in hand', 'Overdose education'] }
+      ]},
+      { title: 'Co-occurring Disorders', timing: 'Throughout', sections: [
+        { t: 'Medications', meds: ['Sertraline', 'Duloxetine', 'Gabapentin', 'Trazodone'], items: [
+          '<b>Chronic pain:</b> duloxetine and non-opioid strategies; buprenorphine treats both pain and OUD.',
+          '<b>Depression / anxiety:</b> SSRIs/SNRIs. <b>Insomnia:</b> trazodone.',
+          'Gabapentin has misuse potential in OUD — use with monitoring.'
+        ]}
+      ], note: '<b>⚠ Pregnancy:</b> buprenorphine or methadone is recommended; avoid withdrawal without MOUD. Coordinate with OB.' }
+    ]
+  },
+  stim: {
+    title: 'Stimulant Use Disorders',
+    sub: 'Cocaine and methamphetamine. No FDA-approved medication — treatment is primarily psychosocial.',
+    phases: [
+      { title: 'Crash', timing: 'Days 1–10', sections: [
+        { t: 'Key Assessments', items: [
+          'Hypersomnia, hyperphagia, dysphoria, anhedonia.',
+          '<b>Daily suicide-risk screening</b> — risk peaks during the crash.',
+          'Cardiac symptoms (chest pain, palpitations) and psychosis or paranoia.'
+        ]},
+        { t: 'Medications', meds: ['Quetiapine', 'Risperidone', 'Trazodone', 'Hydroxyzine'], items: [
+          'Short-term antipsychotic for psychosis or severe agitation.',
+          'Trazodone or hydroxyzine for sleep and anxiety. <b>Benzodiazepines are generally avoided.</b>'
+        ]}
+      ], note: '<b>⚠ Escalate</b> chest pain, stroke symptoms, hyperthermia, or suicidal ideation with plan.' },
+      { title: 'Withdrawal', timing: 'Weeks 2–10', sections: [
+        { t: 'Key Points', items: [
+          'Fatigue, low mood, poor concentration and intense cravings; cue reactivity is high.',
+          'Treat co-occurring depression; reassess as symptoms evolve with abstinence.'
+        ]},
+        { t: 'Medications (off-label)', meds: ['Bupropion', 'Naltrexone', 'Mirtazapine', 'Topiramate', 'Sertraline'], items: [
+          '<b>Methamphetamine:</b> bupropion + injectable naltrexone combination has trial evidence; mirtazapine has some evidence.',
+          '<b>Cocaine:</b> topiramate and modafinil have limited, mixed evidence.'
+        ]}
+      ]},
+      { title: 'Extinction', timing: 'Month 3 onward', sections: [
+        { t: 'Psychosocial Components', items: [
+          '<b>Contingency management</b> — strongest evidence of any intervention.',
+          'CBT, community reinforcement approach, exercise, structured routines.'
+        ]},
+        { t: 'Goals', goals: ['Sustained abstinence', 'Cue-management skills', 'Stable mood and sleep', 'Outpatient CM program'] }
+      ]},
+      { title: 'Methamphetamine-Specific Issues', timing: 'Throughout', sections: [
+        { t: 'Key Points', items: [
+          'Prolonged psychosis may persist weeks after use stops.',
+          'Cognitive deficits — keep materials simple and repeated.',
+          'Dental, skin and cardiovascular complications (cardiomyopathy).'
+        ]}
+      ]}
+    ]
+  },
+  bzd: {
+    title: 'Benzodiazepine Use Disorder',
+    sub: 'Never stop abruptly — seizure and delirium risk. Medically supervised taper only.',
+    phases: [
+      { title: 'Risk Assessment', timing: 'Admission', sections: [
+        { t: 'Key Assessments', items: [
+          'Agent, daily dose, duration of use, prescribed vs illicit (counterfeit pills may contain other drugs).',
+          'History of withdrawal seizures; concurrent alcohol or opioid use.',
+          'Underlying anxiety, panic or insomnia the benzodiazepine was treating.'
+        ]}
+      ]},
+      { title: 'Medically Supervised Taper', timing: 'Weeks to months', sections: [
+        { t: 'Medications', meds: ['Diazepam', 'Clonazepam', 'Phenobarbital', 'Carbamazepine', 'Valproate', 'Propranolol', 'Gabapentin'], items: [
+          '<b>Convert to diazepam (first-line) or clonazepam</b> using an equivalence table (Ashton), verified by the prescriber.',
+          '<b>Taper goal: reduce by 10% of the current dose at each change, every 2–4 weeks.</b> Hold or extend the interval if withdrawal symptoms emerge.',
+          'Adjuncts per prescriber: carbamazepine, valproate, gabapentin; propranolol for somatic symptoms.',
+          'Phenobarbital-based protocols in closely monitored settings.'
+        ]}
+      ], note: '<b>⚠ Co-use with opioids or alcohol</b> increases respiratory-depression and overdose risk — naloxone on hand, close monitoring.' },
+      { title: 'Post-Taper / PAWS', timing: 'Months', sections: [
+        { t: 'Key Points', items: [
+          'Protracted withdrawal: anxiety, insomnia, sensory symptoms, low mood — may last weeks to months.',
+          'Reassure, normalize and monitor; do not restart benzodiazepines for PAWS.'
+        ]},
+        { t: 'Medications', meds: ['Trazodone', 'Melatonin', 'Gabapentin'], items: [ 'Trazodone or melatonin for sleep; gabapentin for persistent symptoms.' ] }
+      ]},
+      { title: 'Anxiety Treatment Without Benzodiazepines', timing: 'Throughout', sections: [
+        { t: 'Medications', meds: ['Sertraline', 'Escitalopram', 'Paroxetine', 'Venlafaxine', 'Duloxetine', 'Buspirone', 'Hydroxyzine'], items: [
+          'SSRIs/SNRIs first-line for anxiety and panic; buspirone; hydroxyzine as needed.',
+          'CBT for anxiety and insomnia (CBT-I).'
+        ]},
+        { t: 'Goals', goals: ['Benzodiazepine-free', 'Anxiety managed with non-addictive treatment', 'CBT skills', 'Outpatient follow-up'] }
+      ]}
+    ]
+  },
+  can: {
+    title: 'Cannabis Use Disorder',
+    sub: 'No FDA-approved medication. Supportive withdrawal care plus psychosocial treatment.',
+    phases: [
+      { title: 'Withdrawal Management', timing: 'Days 1–14', sections: [
+        { t: 'Key Points', items: [
+          'Irritability, insomnia, reduced appetite, anxiety and cravings — begins in 1–2 days, peaks days 2–6.',
+          'Supportive care, sleep hygiene, hydration and nutrition.'
+        ]},
+        { t: 'Medications (off-label)', meds: ['Gabapentin', 'Mirtazapine', 'Hydroxyzine', 'Trazodone', 'N-acetylcysteine', 'Nabiximols'], items: [
+          'Gabapentin; mirtazapine for sleep and appetite; hydroxyzine or trazodone.',
+          'N-acetylcysteine has some evidence in adolescents and young adults; nabiximols is investigational.'
+        ]}
+      ]},
+      { title: 'Psychosocial Treatment', timing: 'Ongoing', sections: [
+        { t: 'Psychosocial Components', items: [ 'Motivational enhancement therapy (MET), CBT, contingency management, mindfulness-based relapse prevention (MBRP).' ] },
+        { t: 'Goals', goals: ['Abstinence or reduced use', 'Improved sleep and mood', 'Coping skills for cravings'] }
+      ]},
+      { title: 'Co-occurring Disorders & Complications', timing: 'Throughout', sections: [
+        { t: 'Key Points', meds: ['Haloperidol', 'Droperidol', 'Capsaicin cream', 'Lithium', 'Buspirone', 'Bupropion', 'Topiramate'], items: [
+          '<b>Psychosis:</b> cannabis worsens the course of psychotic disorders — antipsychotic per prescriber and strong abstinence focus.',
+          '<b>Cannabinoid hyperemesis syndrome:</b> cyclic vomiting relieved by hot showers. Topical capsaicin; haloperidol or droperidol in ED settings; abstinence is definitive.',
+          'Anxiety and depression: buspirone, SSRIs; bupropion or topiramate as indicated.'
+        ]}
+      ]}
+    ]
+  }
+};
+const PATHWAY_COLORS = {aud:'#ffb74d',oud:'#81c995',stim:'#ce93d8',bzd:'#4fc3f7',can:'#a5d6a7'};
+
+function renderPathways(){
+  const chev = '<svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>';
+  let html = '';
+  Object.entries(PATHWAYS).forEach(([id, pw], idx) => {
+    const c = PATHWAY_COLORS[id];
+    html += `<div class="pathway-panel${idx === 0 ? ' active' : ''}" id="pw-${id}"><div class="pw-header"><div class="pw-title" style="color:${c}">${pw.title}</div><div class="pw-sub">${pw.sub}</div></div><div class="phases">`;
+    pw.phases.forEach((ph, i) => {
+      html += `<div class="phase${i === 0 ? ' open' : ''}"><div class="phase-header" onclick="togglePhase(this)"><div class="phase-num" style="background:${c}22;color:${c}">${i + 1}</div><div class="phase-title-wrap"><div class="phase-title">${ph.title}</div><div class="phase-timing">${ph.timing}</div></div>${chev}</div><div class="phase-body">`;
+      ph.sections.forEach(s => {
+        html += `<div class="pw-section"><div class="pw-section-title">${s.t}</div>`;
+        if (s.items) html += '<div class="pw-items">' + s.items.map(t => `<div class="pw-item"><div class="pw-dot" style="background:${c}"></div><div>${t}</div></div>`).join('') + '</div>';
+        if (s.meds) html += '<div class="pw-meds">' + s.meds.map(m => `<span class="pw-med" style="background:${c}1a;color:${c};border-color:${c}44">${m}</span>`).join('') + '</div>';
+        if (s.goals) html += '<div class="pw-goals">' + s.goals.map(g => `<span class="pw-goal">${g}</span>`).join('') + '</div>';
+        html += '</div>';
+      });
+      if (ph.note) html += `<div class="pw-note">${ph.note}</div>`;
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+  });
+  document.getElementById('pathwayRoot').innerHTML = html;
+}
+renderPathways();
+
+/* ── Tab switching ── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ── Pathway nav ── */
+document.querySelectorAll('.pnav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pw = btn.dataset.pw;
+    document.querySelectorAll('.pnav-btn').forEach(b => { b.classList.remove('active'); b.style.background=''; b.style.color=''; b.style.borderColor=''; });
+    document.querySelectorAll('.pathway-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const col = PATHWAY_COLORS[pw];
+    btn.style.background = col + '22';
+    btn.style.color = col;
+    btn.style.borderColor = col + '66';
+    document.getElementById('pw-' + pw).classList.add('active');
+  });
+});
+(function(){const b=document.querySelector('.pnav-btn[data-pw="aud"]');if(b){const c=PATHWAY_COLORS.aud;b.style.background=c+'22';b.style.color=c;b.style.borderColor=c+'66';}})();
+
+/* ── Phase accordion ── */
+function togglePhase(header) {
+  header.parentElement.classList.toggle('open');
+}
+
+/* ── Medication reference ── */
+const CATEGORIES={withdrawal:{label:'Withdrawal Mgmt',color:'#4fc3f7'},opioid:{label:'Opioid Use Disorder',color:'#81c995'},alcohol:{label:'Alcohol Use Disorder',color:'#ffb74d'},antidepressant:{label:'Antidepressant',color:'#ce93d8'},mood:{label:'Mood Stabilizer',color:'#f48fb1'},antipsychotic:{label:'Antipsychotic',color:'#80cbc4'},'sleep-anxiety':{label:'Sleep / Anxiety',color:'#90caf9'}};
+const ORDER=['withdrawal','opioid','alcohol','antidepressant','mood','antipsychotic','sleep-anxiety'];
+
+const MEDS = [
+  /* Withdrawal management */
+  {name:'Diazepam',brand:'Valium',cat:'withdrawal',mechanism:'Positive allosteric modulator of GABA-A receptors — enhances inhibitory neurotransmission, reducing CNS hyperexcitability.',purpose:'First-line for alcohol and sedative withdrawal; prevents seizures and delirium tremens.',uses:['Alcohol withdrawal','Benzodiazepine withdrawal','Seizure prophylaxis'],warn:'Abuse potential; monitor closely in SUD settings. Long half-life reduces breakthrough symptoms.'},
+  {name:'Lorazepam',brand:'Ativan',cat:'withdrawal',mechanism:'GABA-A positive allosteric modulator; intermediate half-life with no active metabolites (glucuronidation only).',purpose:'Withdrawal management when hepatic function is impaired or in older adults.',uses:['Alcohol withdrawal','Liver disease','Older adults'],warn:'Shorter half-life — more breakthrough and rebound symptoms between doses.'},
+  {name:'Clonazepam',brand:'Klonopin',cat:'withdrawal',mechanism:'GABA-A positive allosteric modulator with a long half-life (≈30–40 h).',purpose:'Alternative long-acting agent for benzodiazepine tapers when diazepam is not suitable.',uses:['Benzodiazepine taper','Panic disorder','Seizure disorders'],warn:'Abuse potential; additive respiratory depression with opioids and alcohol.'},
+  {name:'Clonidine',brand:'Catapres',cat:'withdrawal',mechanism:'Central alpha-2 adrenergic agonist — reduces noradrenergic outflow from the locus coeruleus.',purpose:'Relieves autonomic symptoms of opioid withdrawal (sweating, restlessness, tachycardia, anxiety).',uses:['Opioid withdrawal','Autonomic hyperactivity'],warn:'Hold for hypotension or bradycardia; rebound hypertension if stopped abruptly.'},
+  {name:'Phenobarbital',brand:'Luminal',cat:'withdrawal',mechanism:'Barbiturate — increases duration of GABA-A chloride channel opening; long half-life.',purpose:'Benzodiazepine-resistant or complicated alcohol withdrawal; alternative sedative-withdrawal protocols.',uses:['Resistant alcohol withdrawal','Sedative withdrawal'],warn:'Narrow therapeutic window; respiratory depression — use in closely monitored settings.'},
+  {name:'Baclofen',brand:'Lioresal',cat:'withdrawal',mechanism:'GABA-B receptor agonist — reduces excitatory neurotransmitter release.',purpose:'Adjunct for alcohol withdrawal and craving reduction (off-label).',uses:['Alcohol craving','Mild alcohol withdrawal','Liver disease'],warn:'Sedation; withdrawal seizures if stopped abruptly after regular use; renal dosing.'},
+  /* Opioid use disorder */
+  {name:'Buprenorphine',brand:'Suboxone · Subutex · Sublocade',cat:'opioid',mechanism:'High-affinity partial mu-opioid agonist and kappa antagonist; ceiling effect on respiratory depression.',purpose:'First-line MOUD — suppresses withdrawal and craving and blocks the effect of other opioids.',uses:['OUD maintenance','Opioid withdrawal','Low-dose (Bernese) induction','Chronic pain with OUD'],warn:'Precipitated withdrawal if started too early, especially after fentanyl or methadone.'},
+  {name:'Naltrexone',brand:'Revia · Vivitrol',cat:'opioid',mechanism:'Competitive mu-opioid receptor antagonist — blocks opioid effects and reduces alcohol reward.',purpose:'Relapse prevention for AUD and OUD; XR injection once monthly.',uses:['Alcohol use disorder','Opioid use disorder','Craving reduction'],warn:'Requires 7–10 opioid-free days; precipitates withdrawal. Avoid in acute hepatitis or liver failure.'},
+  {name:'Methadone',brand:'Dolophine · Methadose',cat:'opioid',mechanism:'Full mu-opioid agonist with long half-life; NMDA antagonist activity.',purpose:'MOUD through an opioid treatment program (OTP); suited to high tolerance or prior buprenorphine failure.',uses:['OUD maintenance','Pregnancy','High tolerance'],warn:'QTc prolongation; respiratory depression with sedatives; slow titration due to accumulation.'},
+  /* Alcohol use disorder */
+  {name:'Acamprosate',brand:'Campral',cat:'alcohol',mechanism:'Modulates glutamate (NMDA) and GABA systems — restores balance disrupted by chronic alcohol use.',purpose:'Maintains abstinence after withdrawal; reduces protracted withdrawal symptoms.',uses:['Abstinence maintenance','Liver disease','Patients on opioids'],warn:'Contraindicated with CrCl <30; dose-adjust for CrCl 30–50. Three-times-daily dosing.'},
+  {name:'Disulfiram',brand:'Antabuse',cat:'alcohol',mechanism:'Inhibits aldehyde dehydrogenase — acetaldehyde builds up after alcohol, causing an aversive reaction.',purpose:'Aversive deterrent for motivated patients committed to abstinence.',uses:['Supervised abstinence'],warn:'Avoid in cardiac disease, psychosis, pregnancy and liver disease. Never give while intoxicated.'},
+  {name:'Topiramate',brand:'Topamax',cat:'alcohol',mechanism:'Enhances GABA-A activity, antagonizes AMPA/kainate glutamate receptors, blocks sodium channels.',purpose:'Reduces heavy drinking and craving (off-label).',uses:['Alcohol use disorder','Cocaine use (limited evidence)'],warn:'Cognitive slowing, paresthesias, kidney stones; teratogenic. Slow titration.'},
+  {name:'Gabapentin',brand:'Neurontin',cat:'alcohol',mechanism:'Binds alpha-2-delta subunit of voltage-gated calcium channels — reduces excitatory neurotransmitter release.',purpose:'Reduces craving, insomnia and protracted withdrawal in AUD (off-label); adjunct in mild withdrawal.',uses:['Alcohol use disorder','Insomnia','Cannabis withdrawal','Neuropathic pain'],warn:'Misuse potential, especially with opioids; renal dose adjustment.'},
+  /* Antidepressants */
+  {name:'Sertraline',brand:'Zoloft',cat:'antidepressant',mechanism:'Selective serotonin reuptake inhibitor (SSRI).',purpose:'First-line for depression, anxiety and PTSD in co-occurring SUD.',uses:['Depression','Anxiety disorders','PTSD','Panic disorder'],warn:'Early GI upset and activation; serotonin syndrome risk with other serotonergic drugs.'},
+  {name:'Bupropion',brand:'Wellbutrin · Zyban',cat:'antidepressant',mechanism:'Norepinephrine and dopamine reuptake inhibitor; nicotinic antagonist.',purpose:'Depression, smoking cessation; off-label with naltrexone for methamphetamine use disorder.',uses:['Depression','Nicotine dependence','Methamphetamine use (off-label)','ADHD (off-label)'],warn:'Lowers seizure threshold — avoid with seizure history, eating disorders, or alcohol/sedative withdrawal.'},
+  {name:'Mirtazapine',brand:'Remeron',cat:'antidepressant',mechanism:'Alpha-2 antagonist and 5-HT2/5-HT3 and H1 antagonist — increases norepinephrine and serotonin release.',purpose:'Depression with insomnia or poor appetite; some evidence in methamphetamine use disorder.',uses:['Depression','Insomnia','Poor appetite','Methamphetamine use (off-label)'],warn:'Sedation and weight gain; more sedating at lower doses.'},
+  {name:'Venlafaxine',brand:'Effexor XR',cat:'antidepressant',mechanism:'Serotonin–norepinephrine reuptake inhibitor (SNRI).',purpose:'Depression and anxiety disorders, including after benzodiazepine taper.',uses:['Depression','Generalized anxiety','Panic disorder'],warn:'Dose-related blood pressure increase; discontinuation syndrome if stopped abruptly.'},
+  {name:'Duloxetine',brand:'Cymbalta',cat:'antidepressant',mechanism:'Serotonin–norepinephrine reuptake inhibitor (SNRI).',purpose:'Depression and anxiety with co-occurring chronic or neuropathic pain.',uses:['Depression','Chronic pain','Neuropathic pain','Generalized anxiety'],warn:'Avoid with heavy alcohol use or significant liver disease (hepatotoxicity).'},
+  {name:'Trazodone',brand:'Desyrel',cat:'antidepressant',mechanism:'Serotonin antagonist and reuptake inhibitor (5-HT2A antagonist); H1 and alpha-1 antagonism.',purpose:'Non-habit-forming sleep aid in SUD treatment; antidepressant at higher doses.',uses:['Insomnia','Depression'],warn:'Orthostatic hypotension, next-day sedation; rare priapism.'},
+  {name:'Vortioxetine',brand:'Trintellix',cat:'antidepressant',mechanism:'Serotonin reuptake inhibitor plus multiple serotonin-receptor modulation.',purpose:'Depression, particularly with cognitive complaints.',uses:['Depression','Cognitive symptoms of depression'],warn:'Nausea is common; serotonin syndrome risk with other serotonergic drugs.'},
+  /* Mood stabilizers */
+  {name:'Lithium',brand:'Lithobid',cat:'mood',mechanism:'Modulates second-messenger systems (inositol, GSK-3); neuroprotective.',purpose:'Bipolar disorder maintenance; strong anti-suicide effect.',uses:['Bipolar disorder','Suicide risk reduction'],warn:'Narrow therapeutic index — levels, renal and thyroid monitoring; toxicity with dehydration.'},
+  {name:'Valproate',brand:'Depakote',cat:'mood',mechanism:'Increases GABA availability, blocks sodium and T-type calcium channels.',purpose:'Bipolar mania and mixed states; adjunct for alcohol or benzodiazepine withdrawal.',uses:['Bipolar disorder','Withdrawal adjunct'],warn:'Hepatotoxicity and pancreatitis; highly teratogenic. Avoid in liver disease and pregnancy.'},
+  {name:'Lamotrigine',brand:'Lamictal',cat:'mood',mechanism:'Blocks voltage-gated sodium channels; reduces glutamate release.',purpose:'Bipolar depression maintenance.',uses:['Bipolar depression','Mood stabilization'],warn:'Stevens-Johnson syndrome risk — slow titration required; restart titration after missed doses.'},
+  {name:'Carbamazepine',brand:'Tegretol',cat:'mood',mechanism:'Blocks voltage-gated sodium channels.',purpose:'Bipolar disorder; adjunct for alcohol and benzodiazepine withdrawal.',uses:['Bipolar disorder','Withdrawal adjunct','Seizure disorders'],warn:'Strong enzyme inducer (lowers methadone and buprenorphine levels); hyponatremia, blood dyscrasias.'},
+  /* Antipsychotics */
+  {name:'Quetiapine',brand:'Seroquel',cat:'antipsychotic',mechanism:'Second-generation antipsychotic — D2 and 5-HT2A antagonist with strong H1 antagonism.',purpose:'Psychosis, bipolar disorder and bipolar depression.',uses:['Bipolar disorder','Psychosis','Stimulant-induced psychosis'],warn:'Misuse potential in SUD settings; avoid as a routine sleep aid. Metabolic effects.'},
+  {name:'Aripiprazole',brand:'Abilify',cat:'antipsychotic',mechanism:'D2 and 5-HT1A partial agonist, 5-HT2A antagonist.',purpose:'Schizophrenia, bipolar disorder, adjunct in depression.',uses:['Schizophrenia','Bipolar disorder','Depression (adjunct)'],warn:'Akathisia; impulse-control problems (gambling, compulsive behaviors).'},
+  {name:'Olanzapine',brand:'Zyprexa',cat:'antipsychotic',mechanism:'D2 and 5-HT2A antagonist with broad receptor activity.',purpose:'Schizophrenia, acute agitation, bipolar mania.',uses:['Schizophrenia','Bipolar mania','Acute agitation'],warn:'Significant weight gain and metabolic syndrome; sedation.'},
+  {name:'Risperidone',brand:'Risperdal',cat:'antipsychotic',mechanism:'D2 and 5-HT2A antagonist.',purpose:'Psychosis, including stimulant-induced psychosis; bipolar mania.',uses:['Psychosis','Stimulant-induced psychosis','Bipolar mania'],warn:'Hyperprolactinemia; extrapyramidal symptoms at higher doses.'},
+  {name:'Lurasidone',brand:'Latuda',cat:'antipsychotic',mechanism:'D2 and 5-HT2A antagonist; 5-HT7 antagonist.',purpose:'Bipolar depression and schizophrenia with a favorable metabolic profile.',uses:['Bipolar depression','Schizophrenia'],warn:'Must be taken with food (≥350 kcal); akathisia.'},
+  /* Sleep / anxiety */
+  {name:'Hydroxyzine',brand:'Vistaril · Atarax',cat:'sleep-anxiety',mechanism:'H1 antihistamine with anticholinergic and mild anxiolytic effect.',purpose:'Non-addictive as-needed treatment for anxiety and sleep.',uses:['Anxiety','Insomnia','Withdrawal symptoms','Pruritus'],warn:'Sedation, anticholinergic effects; QTc caution at higher doses.'},
+  {name:'Prazosin',brand:'Minipress',cat:'sleep-anxiety',mechanism:'Alpha-1 adrenergic antagonist — reduces noradrenergic activity during sleep.',purpose:'Trauma-related nightmares in PTSD.',uses:['PTSD nightmares','Sleep disturbance'],warn:'First-dose orthostatic hypotension and syncope — start low, titrate.'},
+  {name:'Buspirone',brand:'Buspar',cat:'sleep-anxiety',mechanism:'5-HT1A partial agonist.',purpose:'Non-addictive treatment for generalized anxiety, including after benzodiazepine taper.',uses:['Generalized anxiety','Benzodiazepine-free anxiety care'],warn:'Takes 2–4 weeks for effect; not useful as-needed. Dizziness.'}
+];
+
+const grid=document.getElementById('medGrid'),countLabel=document.getElementById('countLabel'),pillsEl=document.getElementById('filterPills'),searchInput=document.getElementById('searchInput');
+let activeFilter='all',searchQuery='';
+const WARN_SVG='<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+function buildCard(m){const c=CATEGORIES[m.cat];return `<div class="card"><div class="card-accent" style="background:${c.color}"></div><div class="card-body"><div class="card-top"><div><div class="drug-name">${m.name}</div><div class="drug-brand">${m.brand}</div></div><div class="cat-badge" style="background:${c.color}22;color:${c.color}">${c.label}</div></div><div class="divider"></div><div><div class="field-label">Mechanism</div><div class="field-text">${m.mechanism}</div></div><div><div class="field-label">Primary Purpose</div><div class="field-text">${m.purpose}</div></div><div><div class="field-label">Clinical Uses</div><div class="tags">${m.uses.map(u=>`<span class="tag">${u}</span>`).join('')}</div></div>${m.warn?`<div class="warn-row">${WARN_SVG}<span>${m.warn}</span></div>`:''}</div></div>`;}
+function setActivePill(f){activeFilter=f;pillsEl.querySelectorAll('.pill').forEach(p=>{const a=p.dataset.filter===f;p.style.background='';p.style.color='';p.style.borderColor='';if(a){if(f==='all'){p.style.background='var(--text)';p.style.color='var(--bg)';p.style.borderColor='var(--text)';}else{const col=CATEGORIES[f].color;p.style.background=col;p.style.color='#0f1117';p.style.borderColor=col;}}});}
+function render(){const q=searchQuery.toLowerCase();const vis=MEDS.filter(m=>(activeFilter==='all'||m.cat===activeFilter)&&(!q||m.name.toLowerCase().includes(q)||m.brand.toLowerCase().includes(q)||m.purpose.toLowerCase().includes(q)||m.mechanism.toLowerCase().includes(q)||m.uses.some(u=>u.toLowerCase().includes(q))));let html='';(activeFilter==='all'?ORDER:[activeFilter]).forEach(cat=>{const meds=vis.filter(m=>m.cat===cat);if(!meds.length)return;const c=CATEGORIES[cat];html+=`<div class="section-header"><div class="section-header-line"></div><div class="section-header-label" style="color:${c.color}">${c.label.toUpperCase()}</div><div class="section-header-line"></div></div>`;meds.forEach(m=>{html+=buildCard(m);});});grid.innerHTML=html||`<div class="empty">No medications match your search.</div>`;countLabel.textContent=`${vis.length} medication${vis.length!==1?'s':''} shown`;}
+pillsEl.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{setActivePill(p.dataset.filter);render();}));
+searchInput.addEventListener('input',e=>{searchQuery=e.target.value;render();});
+setActivePill('all');render();
+</script>
+<script src="workflow.js"></script>
+</body>
+</html>
