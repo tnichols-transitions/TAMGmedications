@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TAMG Medication Reference</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0f1117;--surface:#181c27;--surface2:#1e2235;--border:#2a3050;--text:#e8eaf2;--text-dim:#8a90a8;--text-muted:#545c78;--warn:#ff8a65;--tag-bg:#252b3e;--accent:#90caf9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
@@ -135,7 +133,7 @@ input[type=search]::placeholder{color:var(--text-muted);}
   <div class="tab-panel active" id="tab-meds">
     <div class="controls">
       <div class="search-wrap">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="search" id="searchInput" placeholder="Search by name, brand, or use..." autocomplete="off">
       </div>
       <div class="filter-pills" id="filterPills">
@@ -156,237 +154,616 @@ input[type=search]::placeholder{color:var(--text-muted);}
 
   <!-- ═══════════════ TAB 2: TREATMENT PATHWAYS ═══════════════ -->
   <div class="tab-panel" id="tab-pathways">
-    <div class="pathway-nav">
+    <div class="pathway-nav" id="pathwayNav">
       <button class="pnav-btn active" data-pw="aud">Alcohol Use Disorder</button>
       <button class="pnav-btn" data-pw="oud">Opioid Use Disorder</button>
       <button class="pnav-btn" data-pw="stim">Stimulant Use Disorders</button>
       <button class="pnav-btn" data-pw="bzd">Benzodiazepine Use Disorder</button>
       <button class="pnav-btn" data-pw="can">Cannabis Use Disorder</button>
     </div>
-    <div id="pathwayRoot"></div>
-  </div>
 
-</div>
+    <!-- AUD -->
+    <div class="pathway-panel active" id="pw-aud">
+      <div class="pw-header">
+        <div class="pw-title" style="color:#ffb74d">Alcohol Use Disorder</div>
+        <div class="pw-sub">Biopsychosocial treatment framework · Residential setting</div>
+      </div>
+      <div class="phases">
+
+        <div class="phase open">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ffb74d22;color:#ffb74d">1</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Assessment & Medical Stabilization</div>
+              <div class="phase-timing">Day 1–3</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Key Assessments</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span>CIWA-Ar score to quantify withdrawal severity and guide medication dosing</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span>Vital signs, LFTs, CBC, BMP, BAL, toxicology screen</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span>Wernicke's encephalopathy screening — thiamine deficiency risk</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span>Psychiatric evaluation for co-occurring disorders</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span>Risk stratification: seizure history, prior DTs, medical comorbidities</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Pharmacological Interventions</div>
+              <div class="pw-meds">
+                <span class="pw-med" style="background:#ffb74d22;color:#ffb74d;border-color:#ffb74d44">Diazepam / Lorazepam (CIWA protocol)</span>
+                <span class="pw-med" style="background:#ffb74d22;color:#ffb74d;border-color:#ffb74d44">Thiamine 500mg IV × 3 days then PO</span>
+                <span class="pw-med" style="background:#ffb74d22;color:#ffb74d;border-color:#ffb74d44">Phenobarbital (high tolerance)</span>
+                <span class="pw-med" style="background:#ffb74d22;color:#ffb74d;border-color:#ffb74d44">Baclofen (adjunct/anxiety)</span>
+                <span class="pw-med" style="background:#ffb74d22;color:#ffb74d;border-color:#ffb74d44">Gabapentin (adjunct)</span>
+                <span class="pw-med" style="background:#ffb74d22;color:#ffb74d;border-color:#ffb74d44">MVI + Folate supplementation</span>
+              </div>
+            </div>
+            <div class="pw-note"><b>⚠ Seizure & DT Risk:</b> Alcohol withdrawal seizures can occur 6–48 hrs after last drink. Delirium tremens peaks at 48–96 hrs. CIWA ≥10 warrants pharmacological treatment. Never abruptly discontinue benzodiazepines used for withdrawal.</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ffb74d22;color:#ffb74d">2</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Early Recovery & Craving Management</div>
+              <div class="phase-timing">Days 4–14</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Goals</div>
+              <div class="pw-goals">
+                <span class="pw-goal">Reduce craving</span><span class="pw-goal">Manage PAWS symptoms</span><span class="pw-goal">Stabilize mood &amp; sleep</span><span class="pw-goal">Engage in treatment</span>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Medications</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Naltrexone</b> — start once medically stable; reduces craving and reward; oral or IM (Vivitrol)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Gabapentin</b> — post-acute withdrawal anxiety, insomnia, craving reduction (off-label)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Topiramate</b> — reduces drinking urges and reward; particularly useful for heavy drinkers</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Hydroxyzine / Trazodone</b> — non-controlled options for anxiety and insomnia</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>SSRI / SNRI</b> — if co-occurring depression or anxiety confirmed (reassess after 2–4 weeks sobriety)</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ffb74d22;color:#ffb74d">3</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Relapse Prevention & Maintenance</div>
+              <div class="phase-timing">Week 2 onward</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">FDA-Approved Maintenance Options</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Naltrexone PO</b> (50mg/day) or <b>IM</b> (380mg q4 weeks) — reduces relapse to heavy drinking; best for motivated patients</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Acamprosate</b> (666mg TID) — reduces protracted dysphoria and PAWS; best for abstinence-focused patients with significant anxiety</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Disulfiram</b> — deterrent only; supervised administration maximizes effectiveness; requires motivation and hepatic screening</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Psychosocial Components</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span>CBT for alcohol use disorder — coping skills, triggers, relapse prevention planning</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span>Motivational Enhancement Therapy (MET)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span>12-step facilitation or SMART Recovery</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span>Continuing care planning and step-down level of care</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ffb74d22;color:#ffb74d">4</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Co-occurring Disorder Management</div>
+              <div class="phase-timing">Ongoing</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Common Comorbidities & Approach</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Depression</b> — reassess after 2–4 weeks sobriety; many depressive symptoms resolve; SSRI/bupropion if persistent</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Anxiety</b> — distinguish withdrawal-related vs. primary disorder; buspirone, hydroxyzine, or SSRIs as appropriate</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>PTSD</b> — sertraline + trauma-focused therapy (CPT or PE); prazosin for nightmares</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Bipolar disorder</b> — lithium or valproate; avoid antidepressant monotherapy; naltrexone compatible with mood stabilizers</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffb74d"></div><span><b>Insomnia</b> — trazodone, mirtazapine, or hydroxyzine; avoid benzodiazepines in residential SUD settings</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /phases -->
+    </div><!-- /pw-aud -->
+
+    <!-- OUD -->
+    <div class="pathway-panel" id="pw-oud">
+      <div class="pw-header">
+        <div class="pw-title" style="color:#81c995">Opioid Use Disorder</div>
+        <div class="pw-sub">MOUD-integrated treatment framework · Residential setting</div>
+      </div>
+      <div class="phases">
+
+        <div class="phase open">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#81c99522;color:#81c995">1</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Assessment & Withdrawal Management</div>
+              <div class="phase-timing">Day 1–5</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Key Assessments</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>COWS (Clinical Opiate Withdrawal Scale) — score ≥8 indicates moderate withdrawal, guides induction</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>Opioid use history: substances, route, quantity, last use, tolerance level</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>Toxicology screen — confirm opioid presence, check for polysubstance use</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>Fentanyl-specific assessment — prolonged withdrawal and induction challenges</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>MOUD preferences and treatment history</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Withdrawal Management Options</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>Clonidine</b> — symptomatic relief (autonomic symptoms); not a standalone treatment; no abuse potential</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>Supportive comfort meds</b> — dicyclomine (cramps), ondansetron (nausea), loperamide (diarrhea), hydroxyzine (anxiety/sleep)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>NSAIDs / acetaminophen</b> — myalgias and pain</span></div>
+              </div>
+            </div>
+            <div class="pw-note"><b>⚠ Fentanyl Warning:</b> High-potency fentanyl causes prolonged, severe withdrawal with delayed peak. Standard COWS may underestimate severity. Extended monitoring period required before buprenorphine induction to avoid precipitated withdrawal.</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#81c99522;color:#81c995">2</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">MOUD Induction & Stabilization</div>
+              <div class="phase-timing">Days 3–14</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">MOUD Options</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>Buprenorphine/Naloxone (Suboxone)</b> — initiate at COWS ≥8–12; start 2–4mg SL, titrate to comfort (typically 8–24mg/day); standard first-line MOUD in residential</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>Low-dose buprenorphine induction (Bernese method)</b> — microdose protocol for fentanyl-dependent patients; allows induction without full withdrawal</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>Naltrexone (Vivitrol)</b> — requires 7–10 days full abstinence from opioids; IM monthly injection preferred; best for patients declining agonist therapy</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>Methadone</b> — full agonist; highest efficacy for severe OUD; requires licensed OTP; less common in residential but used in longer-term programs</span></div>
+              </div>
+            </div>
+            <div class="pw-note"><b>⚠ Precipitated Withdrawal:</b> Buprenorphine given too early (before COWS ≥8 or &lt;12–24 hrs from last short-acting opioid, &lt;36–72 hrs from methadone) displaces other opioids from receptors causing sudden severe withdrawal. Never rush induction.</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#81c99522;color:#81c995">3</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Maintenance & Relapse Prevention</div>
+              <div class="phase-timing">Week 2 onward</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Key Principles</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>MOUD should be continued indefinitely — abrupt discontinuation dramatically increases overdose and death risk</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>Naloxone co-prescription and education for patient and family (overdose rescue)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>Transition planning to outpatient MOUD provider before discharge is essential</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>Extended-release injectable formulations (Sublocade, Vivitrol) for adherence support</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Psychosocial Components</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>Individual and group counseling integrated with MOUD (not a substitute for it)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>Contingency management — evidence-based behavioral reinforcement</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>Peer recovery support services</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span>Housing, employment, and social support planning</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#81c99522;color:#81c995">4</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Co-occurring Disorder Management</div>
+              <div class="phase-timing">Ongoing</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Common Comorbidities</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>Depression</b> — SSRIs or bupropion; buprenorphine has intrinsic antidepressant properties via kappa antagonism</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>Anxiety / PTSD</b> — SSRIs (sertraline first-line for PTSD); prazosin for nightmares; avoid benzodiazepines</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>Chronic pain</b> — multimodal approach; buprenorphine provides analgesia; duloxetine for neuropathic pain; avoid full agonist opioids</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>Insomnia</b> — trazodone, mirtazapine, hydroxyzine; gabapentin has misuse potential in OUD — use cautiously</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#81c995"></div><span><b>ADHD</b> — bupropion preferred; stimulants require careful monitoring given SUD history</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /pw-oud -->
+
+    <!-- STIMULANT -->
+    <div class="pathway-panel" id="pw-stim">
+      <div class="pw-header">
+        <div class="pw-title" style="color:#ce93d8">Stimulant Use Disorders</div>
+        <div class="pw-sub">Cocaine · Methamphetamine · Prescription stimulants · No FDA-approved pharmacotherapy</div>
+      </div>
+      <div class="phases">
+
+        <div class="phase open">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ce93d822;color:#ce93d8">1</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Assessment & Acute Stabilization</div>
+              <div class="phase-timing">Day 1–5 ("Crash" phase)</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Stimulant Withdrawal Phases</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Crash (hrs–days):</b> Hypersomnia, hyperphagia, depressed mood, fatigue — no pharmacological intervention typically needed</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Withdrawal (days–weeks):</b> Dysphoria, anhedonia, intense craving, anxiety, poor concentration</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Extinction (weeks–months):</b> Episodic craving triggered by cues; vulnerability to relapse</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Acute Management</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>No benzodiazepines</b> for routine stimulant withdrawal unless seizure risk or severe agitation</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Supportive care</b> — hydration, nutrition, sleep support, monitoring for psychiatric decompensation</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Meth psychosis</b> — antipsychotics (quetiapine, risperidone) if psychosis persists beyond 48–72 hrs of abstinence; most resolves with sleep/abstinence</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Suicide risk assessment</b> — post-stimulant dysphoria carries significant suicidal ideation risk</span></div>
+              </div>
+            </div>
+            <div class="pw-note"><b>⚠ No FDA-Approved Pharmacotherapy:</b> Unlike alcohol or opioid use disorder, no medication is currently FDA-approved for stimulant use disorder. Treatment is primarily psychosocial. Contingency management has the strongest evidence base.</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ce93d822;color:#ce93d8">2</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Off-Label Pharmacological Support</div>
+              <div class="phase-timing">Week 1–4</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Evidence-Informed Options (Off-Label)</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Bupropion</b> — most studied agent; modest evidence for cocaine and meth use reduction; treats co-occurring depression; dopaminergic mechanism targets same pathway</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Naltrexone</b> — some evidence for cocaine use reduction, especially with alcohol comorbidity; blocks opioid-mediated reward enhancement</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Mirtazapine</b> — evidence for meth use reduction in MSM populations; addresses insomnia and anxiety in early recovery</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Topiramate</b> — some evidence for cocaine reduction; reduces reward salience</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Modafinil</b> — studied for cocaine use disorder; mixed evidence; may reduce withdrawal fatigue and cognitive dysfunction</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Symptom-Targeted Medications</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Trazodone / Mirtazapine</b> — insomnia and anhedonia during withdrawal</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Quetiapine (low dose)</b> — persistent psychosis, agitation, sleep disturbance</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>SSRIs</b> — co-occurring depression (allow 2–4 weeks abstinence to distinguish from withdrawal dysphoria when possible)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Hydroxyzine / Buspirone</b> — anxiety management without abuse potential</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ce93d822;color:#ce93d8">3</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Psychosocial Treatment (Primary Intervention)</div>
+              <div class="phase-timing">Throughout residential stay</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Evidence-Based Psychosocial Interventions</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Contingency Management (CM)</b> — strongest evidence for stimulant use disorder; tangible rewards for negative urine screens; reduces use frequency and duration</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Cognitive Behavioral Therapy (CBT)</b> — cue exposure, craving management, trigger identification, relapse prevention planning</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Matrix Model</b> — structured manualized program specifically developed for stimulant use disorders</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Motivational Interviewing</b> — especially in ambivalent patients or early engagement</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Peer support</b> — Crystal Meth Anonymous, Cocaine Anonymous, SMART Recovery</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ce93d822;color:#ce93d8">4</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Methamphetamine-Specific Considerations</div>
+              <div class="phase-timing">Ongoing assessment</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Unique Clinical Challenges</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Prolonged anhedonia</b> — dopaminergic downregulation may persist weeks to months; manage expectations; bupropion or mirtazapine may help</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Cognitive impairment</b> — executive function, attention, memory deficits common; often improve significantly with sustained abstinence (3–12 months)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Meth-induced psychosis</b> — can persist beyond acute use; monitor closely; antipsychotics if not resolving within days</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Dental disease</b> ("meth mouth") — address as part of comprehensive medical care</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ce93d8"></div><span><b>Sexual risk behavior</b> — chemsex patterns common; HIV/HCV screening and prevention integration</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /pw-stim -->
+
+    <!-- BZD -->
+    <div class="pathway-panel" id="pw-bzd">
+      <div class="pw-header">
+        <div class="pw-title" style="color:#4fc3f7">Benzodiazepine Use Disorder</div>
+        <div class="pw-sub">Medically managed taper · One of the most dangerous withdrawal syndromes</div>
+      </div>
+      <div class="phases">
+
+        <div class="phase open">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#4fc3f722;color:#4fc3f7">1</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Assessment & Risk Stratification</div>
+              <div class="phase-timing">Day 1–2</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Critical Assessments</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span>Specific benzodiazepine(s), dose, frequency, duration of use — all determine taper strategy</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span>CIWA-B (benzodiazepine version) or CIWA-Ar for withdrawal severity monitoring</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span>Polysubstance use — alcohol co-dependence dramatically increases seizure risk</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span>Prior withdrawal seizure or delirium history — highest risk indicator</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span>Prescribing history — iatrogenic dependence vs. non-prescribed use</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span>Baseline anxiety disorder evaluation — differentiate from withdrawal anxiety</span></div>
+              </div>
+            </div>
+            <div class="pw-note"><b>⚠ Life-Threatening Withdrawal:</b> Benzodiazepine withdrawal, like alcohol withdrawal, can cause fatal seizures and delirium. NEVER abruptly discontinue in a dependent patient. Withdrawal severity depends on dose, duration, half-life of agent, and individual factors. Requires medical management.</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#4fc3f722;color:#4fc3f7">2</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Medically Supervised Taper</div>
+              <div class="phase-timing">Days 2–28+ (highly individualized)</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Taper Strategy</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Convert to long-acting equivalent</b> — diazepam first-line, or clonazepam; preferred for taper due to long half-life and self-tapering properties</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Ashton Manual equivalence</b> — convert patient's current benzo to diazepam equivalent dose</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Reduction rate</b> — goal of 10% reduction of the current dose at each change, every 2–4 weeks; slower for higher doses or longer-term use</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Phenobarbital taper</b> — alternative protocol, especially for polysubstance or high-dose cases</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Hold or slow taper</b> if CIWA significantly elevated or breakthrough symptoms emerge</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Adjunct Medications</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Carbamazepine or valproate</b> — anticonvulsant adjunct to reduce seizure risk; may allow lower benzo doses in taper</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Propranolol</b> — manages autonomic symptoms (tachycardia, tremor, sweating) without CNS dependence</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Hydroxyzine</b> — non-GABA anxiolytic for breakthrough anxiety during taper</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Gabapentin</b> — adjunct for anxiety, sleep, and symptom management during taper (monitor misuse potential)</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#4fc3f722;color:#4fc3f7">3</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Post-Taper Stabilization & PAWS</div>
+              <div class="phase-timing">Week 4 – Month 6+</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Protracted Withdrawal Syndrome (PAWS)</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span>Anxiety, insomnia, cognitive difficulties, sensory hypersensitivity can persist for months after benzo cessation</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>SSRIs / SNRIs</b> — for underlying anxiety disorder or depression (start after taper stabilization)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Buspirone</b> — long-term non-addictive anxiolytic; takes 2–4 weeks to work; start early in taper phase</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>CBT for anxiety</b> — most effective long-term strategy for anxiety management without medication dependence</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Sleep hygiene protocols</b> — trazodone or mirtazapine for refractory insomnia; melatonin, sleep restriction therapy</span></div>
+              </div>
+            </div>
+            <div class="pw-note"><b>⚠ Never replace with another benzo:</b> Substituting one benzodiazepine for another for anxiety management post-taper perpetuates dependence. Non-GABAergic alternatives are essential. Buspirone, hydroxyzine, SSRIs, and CBT are the preferred long-term strategy.</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#4fc3f722;color:#4fc3f7">4</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Underlying Anxiety Disorder Treatment</div>
+              <div class="phase-timing">Ongoing</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Treating the Root Anxiety Disorder</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>GAD</b> — SSRIs (escitalopram, sertraline), SNRIs (venlafaxine, duloxetine), buspirone, or combination</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Panic disorder</b> — SSRIs first-line; venlafaxine; CBT with interoceptive exposure</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>PTSD</b> — sertraline or paroxetine; trauma-focused therapy (CPT, PE, EMDR)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>Social anxiety</b> — SSRIs; venlafaxine; propranolol for situational performance anxiety</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#4fc3f7"></div><span><b>CBT</b> — evidence-based for all anxiety disorders; reduces need for long-term pharmacotherapy</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /pw-bzd -->
+
+    <!-- CANNABIS -->
+    <div class="pathway-panel" id="pw-can">
+      <div class="pw-header">
+        <div class="pw-title" style="color:#a5d6a7">Cannabis Use Disorder</div>
+        <div class="pw-sub">No FDA-approved pharmacotherapy · Predominantly psychosocial treatment</div>
+      </div>
+      <div class="phases">
+
+        <div class="phase open">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#a5d6a722;color:#a5d6a7">1</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Assessment & Withdrawal Management</div>
+              <div class="phase-timing">Day 1–7</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Cannabis Withdrawal Syndrome (CWS)</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span>Occurs in ~50% of daily users; onset 1–3 days after cessation; peaks days 2–6; resolves in 1–2 weeks</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Symptoms:</b> Irritability, anxiety, insomnia, decreased appetite, restlessness, depressed mood, physical discomfort</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span>Not life-threatening — no seizure or delirium risk (unlike alcohol/benzo withdrawal)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span>High-potency concentrate use (dabs, wax) associated with more severe withdrawal</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Symptom Management</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Mirtazapine</b> — most evidence for CWS; addresses insomnia, appetite loss, and anxiety simultaneously</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Hydroxyzine</b> — non-controlled anxiolytic for irritability and sleep during withdrawal</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Trazodone</b> — insomnia during withdrawal period</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>NSAIDs / acetaminophen</b> — physical discomfort, headache</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Nabiximols (Sativex)</b> — not FDA-approved in US; studied in other countries for CWS; THC/CBD combination reduces withdrawal severity</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#a5d6a722;color:#a5d6a7">2</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Off-Label Pharmacological Approaches</div>
+              <div class="phase-timing">Week 1–4</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Investigational / Off-Label Options</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>N-acetylcysteine (NAC)</b> — glutamate modulator; studied in adolescents and young adults; modest evidence for craving reduction; very safe profile</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Gabapentin</b> — reduces withdrawal symptoms and cannabis use in some trials; useful if co-occurring anxiety or insomnia</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Topiramate</b> — mixed evidence for craving reduction; significant cognitive side effects limit use</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Lithium</b> — very limited evidence; not recommended routinely</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Buspirone</b> — some evidence for anxiety-driven cannabis use; non-controlled, safe in SUD settings</span></div>
+              </div>
+            </div>
+            <div class="pw-note"><b>Note:</b> No pharmacotherapy has demonstrated robust efficacy for cannabis use disorder in large controlled trials. The evidence base is significantly smaller and weaker than for AUD or OUD. Psychosocial treatment remains the primary intervention.</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#a5d6a722;color:#a5d6a7">3</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Psychosocial Treatment (Primary Approach)</div>
+              <div class="phase-timing">Throughout treatment</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Evidence-Based Interventions</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Motivational Enhancement Therapy (MET)</b> — particularly effective given high ambivalence about cannabis abstinence; 2–4 session protocol with strong evidence</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>CBT</b> — coping skills, cue management, refusal skills, relapse prevention; most effective combined with MET (MET-CBT)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Contingency Management</b> — effective, especially for adolescents and young adults; tangible reinforcement for abstinence</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Mindfulness-Based Relapse Prevention (MBRP)</b> — addresses craving and emotional dysregulation common in cannabis use disorder</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#a5d6a722;color:#a5d6a7">4</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Co-occurring Disorder Management</div>
+              <div class="phase-timing">Ongoing</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Common Comorbidities & Considerations</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Anxiety disorders</b> — often the driver of cannabis use ("self-medication"); SSRIs or buspirone; CBT; anxiety may transiently worsen in early abstinence</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Depression</b> — reassess after 2–4 weeks abstinence; cannabis-related depression often improves; treat persistent MDD with SSRIs or bupropion</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>ADHD</b> — frequently comorbid; stimulant medications or bupropion; address ADHD as it may drive self-medication use</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Psychosis</b> — cannabis strongly associated with psychosis onset and relapse in vulnerable individuals; antipsychotics if indicated; abstinence is essential</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>Sleep</b> — cannabis suppresses REM sleep; vivid dreams and insomnia common in early abstinence; mirtazapine or trazodone; sleep hygiene education</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#a5d6a7"></div><span><b>CHS (Cannabinoid Hyperemesis Syndrome)</b> — cyclic vomiting in heavy users; haloperidol or droperidol for acute episodes; capsaicin cream</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /pw-can -->
+
+    <div class="footer"><strong>Clinical reference only.</strong> Treatment pathways are general frameworks and must be adapted to each patient's individual clinical presentation, comorbidities, and preferences. Consult current clinical guidelines and institutional protocols.</div>
+  </div><!-- /tab-pathways -->
+
+</div><!-- /page -->
 
 <script>
-/* ── Pathway content ── */
-const PATHWAYS = {
-  aud: {
-    title: 'Alcohol Use Disorder',
-    sub: 'Stabilization → early recovery → maintenance, with co-occurring disorders addressed throughout.',
-    phases: [
-      { title: 'Medical Stabilization & Withdrawal', timing: 'Days 1–7', sections: [
-        { t: 'Key Assessments', items: [
-          '<b>CIWA-Ar</b> on admission and per protocol; symptom-triggered dosing guided by score.',
-          '<b>Seizure and delirium tremens risk:</b> prior withdrawal seizures or DTs, heavy daily use, older age, concurrent sedative use, abnormal labs.',
-          'Vital signs, hydration, electrolytes (Mg, K, phosphate), LFTs, glucose.',
-          'Screen for Wernicke encephalopathy: confusion, ataxia, eye-movement abnormalities.'
-        ]},
-        { t: 'Medications', meds: ['Diazepam', 'Lorazepam', 'Phenobarbital', 'Thiamine', 'Folate', 'Gabapentin', 'Baclofen'], items: [
-          '<b>Benzodiazepine</b> per CIWA-Ar protocol — diazepam when hepatic function is normal; lorazepam in liver disease or older adults.',
-          '<b>Thiamine before any glucose</b>, plus folate and a multivitamin.',
-          'Phenobarbital for benzodiazepine-resistant withdrawal in monitored settings; gabapentin or baclofen as adjuncts for mild withdrawal.'
-        ]}
-      ], note: '<b>⚠ Escalate</b> for seizures, hallucinations with autonomic instability, CIWA-Ar ≥19 not responding to treatment, or unstable vitals.' },
-      { title: 'Early Recovery', timing: 'Weeks 1–4', sections: [
-        { t: 'Medications', meds: ['Naltrexone', 'Acamprosate', 'Gabapentin', 'Topiramate'], items: [
-          'Start relapse-prevention medication during residential stay so it is established before discharge.',
-          '<b>Naltrexone</b> (oral or monthly injection) reduces craving and heavy drinking — not with opioids or MOUD.',
-          '<b>Acamprosate</b> supports abstinence; safe in liver disease, dose-adjust for renal impairment.',
-          'Gabapentin and topiramate are off-label options with supporting evidence.'
-        ]},
-        { t: 'Psychosocial Components', items: [
-          'Motivational interviewing, CBT for relapse prevention, mutual-help orientation (AA, SMART Recovery).',
-          'Sleep hygiene and management of post-acute withdrawal symptoms.'
-        ]}
-      ]},
-      { title: 'Maintenance', timing: 'Month 1 onward', sections: [
-        { t: 'Medications', meds: ['Naltrexone', 'Acamprosate', 'Disulfiram'], items: [
-          'Continue naltrexone or acamprosate for at least 6–12 months.',
-          '<b>Disulfiram</b> only for motivated patients with supervised dosing; avoid in cardiac disease, psychosis, pregnancy or significant liver disease.'
-        ]},
-        { t: 'Goals', goals: ['Sustained abstinence or reduced heavy drinking', 'Linkage to outpatient prescriber', 'Relapse-prevention plan', 'Recovery supports in place'] }
-      ]},
-      { title: 'Co-occurring Disorders', timing: 'Throughout', sections: [
-        { t: 'Medications', meds: ['Sertraline', 'Buspirone', 'Hydroxyzine', 'Trazodone', 'Prazosin', 'Lithium', 'Valproate', 'Bupropion', 'Mirtazapine'], items: [
-          '<b>Depression / anxiety:</b> SSRIs/SNRIs (sertraline), buspirone, hydroxyzine. Reassess after 2–4 weeks of abstinence.',
-          '<b>Insomnia:</b> trazodone, hydroxyzine or mirtazapine; avoid benzodiazepines and Z-drugs.',
-          '<b>PTSD:</b> sertraline; prazosin for nightmares.',
-          '<b>Bipolar disorder:</b> lithium or valproate per psychiatry (valproate caution in liver disease).',
-          'Bupropion is an option for depression only when there is no seizure risk.'
-        ]}
-      ]}
-    ]
-  },
-  oud: {
-    title: 'Opioid Use Disorder',
-    sub: 'MOUD is the standard of care. Withdrawal management alone carries high overdose risk.',
-    phases: [
-      { title: 'Withdrawal Assessment', timing: 'Admission – Day 3', sections: [
-        { t: 'Key Assessments', items: [
-          '<b>COWS</b> on admission and per protocol.',
-          'Substance history: type of opioid, route, last use, <b>fentanyl exposure</b>, current MOUD and dose.',
-          'Pregnancy test, overdose history, co-use of alcohol or sedatives.'
-        ]},
-        { t: 'Symptomatic Medications', meds: ['Clonidine', 'Ondansetron', 'Loperamide', 'Dicyclomine', 'Hydroxyzine'], items: [
-          'Clonidine for autonomic symptoms (hold for low BP or HR); ondansetron, loperamide, dicyclomine; NSAIDs or acetaminophen for aches.'
-        ]}
-      ], note: '<b>⚠ Fentanyl:</b> long tissue storage makes timing of withdrawal unpredictable and increases precipitated-withdrawal risk with standard buprenorphine induction.' },
-      { title: 'MOUD Induction', timing: 'Days 1–7', sections: [
-        { t: 'Medications', meds: ['Buprenorphine', 'Methadone', 'Naltrexone'], items: [
-          '<b>Buprenorphine/naloxone:</b> standard induction at objective withdrawal (COWS ≥8–12).',
-          '<b>Low-dose (Bernese) induction:</b> small overlapping buprenorphine doses without stopping full agonist — preferred with fentanyl or methadone exposure.',
-          '<b>Methadone:</b> through an OTP; consider for prior buprenorphine failure or very high tolerance. Monitor QTc.',
-          '<b>XR-naltrexone (Vivitrol):</b> requires 7–10 opioid-free days; for patients preferring non-agonist treatment.'
-        ]}
-      ]},
-      { title: 'Maintenance', timing: 'Ongoing', sections: [
-        { t: 'Key Points', meds: ['Buprenorphine', 'Naloxone'], items: [
-          'MOUD is continued <b>indefinitely</b>; tapering is patient-led and not a treatment goal.',
-          'Extended-release buprenorphine (Sublocade) is an option for adherence or diversion concerns.',
-          '<b>Naloxone kit for every patient at discharge</b>; counsel on reduced tolerance.'
-        ]},
-        { t: 'Goals', goals: ['Stable MOUD dose', 'Outpatient prescriber or OTP linked before discharge', 'Naloxone in hand', 'Overdose education'] }
-      ]},
-      { title: 'Co-occurring Disorders', timing: 'Throughout', sections: [
-        { t: 'Medications', meds: ['Sertraline', 'Duloxetine', 'Gabapentin', 'Trazodone'], items: [
-          '<b>Chronic pain:</b> duloxetine and non-opioid strategies; buprenorphine treats both pain and OUD.',
-          '<b>Depression / anxiety:</b> SSRIs/SNRIs. <b>Insomnia:</b> trazodone.',
-          'Gabapentin has misuse potential in OUD — use with monitoring.'
-        ]}
-      ], note: '<b>⚠ Pregnancy:</b> buprenorphine or methadone is recommended; avoid withdrawal without MOUD. Coordinate with OB.' }
-    ]
-  },
-  stim: {
-    title: 'Stimulant Use Disorders',
-    sub: 'Cocaine and methamphetamine. No FDA-approved medication — treatment is primarily psychosocial.',
-    phases: [
-      { title: 'Crash', timing: 'Days 1–10', sections: [
-        { t: 'Key Assessments', items: [
-          'Hypersomnia, hyperphagia, dysphoria, anhedonia.',
-          '<b>Daily suicide-risk screening</b> — risk peaks during the crash.',
-          'Cardiac symptoms (chest pain, palpitations) and psychosis or paranoia.'
-        ]},
-        { t: 'Medications', meds: ['Quetiapine', 'Risperidone', 'Trazodone', 'Hydroxyzine'], items: [
-          'Short-term antipsychotic for psychosis or severe agitation.',
-          'Trazodone or hydroxyzine for sleep and anxiety. <b>Benzodiazepines are generally avoided.</b>'
-        ]}
-      ], note: '<b>⚠ Escalate</b> chest pain, stroke symptoms, hyperthermia, or suicidal ideation with plan.' },
-      { title: 'Withdrawal', timing: 'Weeks 2–10', sections: [
-        { t: 'Key Points', items: [
-          'Fatigue, low mood, poor concentration and intense cravings; cue reactivity is high.',
-          'Treat co-occurring depression; reassess as symptoms evolve with abstinence.'
-        ]},
-        { t: 'Medications (off-label)', meds: ['Bupropion', 'Naltrexone', 'Mirtazapine', 'Topiramate', 'Sertraline'], items: [
-          '<b>Methamphetamine:</b> bupropion + injectable naltrexone combination has trial evidence; mirtazapine has some evidence.',
-          '<b>Cocaine:</b> topiramate and modafinil have limited, mixed evidence.'
-        ]}
-      ]},
-      { title: 'Extinction', timing: 'Month 3 onward', sections: [
-        { t: 'Psychosocial Components', items: [
-          '<b>Contingency management</b> — strongest evidence of any intervention.',
-          'CBT, community reinforcement approach, exercise, structured routines.'
-        ]},
-        { t: 'Goals', goals: ['Sustained abstinence', 'Cue-management skills', 'Stable mood and sleep', 'Outpatient CM program'] }
-      ]},
-      { title: 'Methamphetamine-Specific Issues', timing: 'Throughout', sections: [
-        { t: 'Key Points', items: [
-          'Prolonged psychosis may persist weeks after use stops.',
-          'Cognitive deficits — keep materials simple and repeated.',
-          'Dental, skin and cardiovascular complications (cardiomyopathy).'
-        ]}
-      ]}
-    ]
-  },
-  bzd: {
-    title: 'Benzodiazepine Use Disorder',
-    sub: 'Never stop abruptly — seizure and delirium risk. Medically supervised taper only.',
-    phases: [
-      { title: 'Risk Assessment', timing: 'Admission', sections: [
-        { t: 'Key Assessments', items: [
-          'Agent, daily dose, duration of use, prescribed vs illicit (counterfeit pills may contain other drugs).',
-          'History of withdrawal seizures; concurrent alcohol or opioid use.',
-          'Underlying anxiety, panic or insomnia the benzodiazepine was treating.'
-        ]}
-      ]},
-      { title: 'Medically Supervised Taper', timing: 'Weeks to months', sections: [
-        { t: 'Medications', meds: ['Diazepam', 'Clonazepam', 'Phenobarbital', 'Carbamazepine', 'Valproate', 'Propranolol', 'Gabapentin'], items: [
-          '<b>Convert to diazepam (first-line) or clonazepam</b> using an equivalence table (Ashton), verified by the prescriber.',
-          '<b>Taper goal: reduce by 10% of the current dose at each change, every 2–4 weeks.</b> Hold or extend the interval if withdrawal symptoms emerge.',
-          'Adjuncts per prescriber: carbamazepine, valproate, gabapentin; propranolol for somatic symptoms.',
-          'Phenobarbital-based protocols in closely monitored settings.'
-        ]}
-      ], note: '<b>⚠ Co-use with opioids or alcohol</b> increases respiratory-depression and overdose risk — naloxone on hand, close monitoring.' },
-      { title: 'Post-Taper / PAWS', timing: 'Months', sections: [
-        { t: 'Key Points', items: [
-          'Protracted withdrawal: anxiety, insomnia, sensory symptoms, low mood — may last weeks to months.',
-          'Reassure, normalize and monitor; do not restart benzodiazepines for PAWS.'
-        ]},
-        { t: 'Medications', meds: ['Trazodone', 'Melatonin', 'Gabapentin'], items: [ 'Trazodone or melatonin for sleep; gabapentin for persistent symptoms.' ] }
-      ]},
-      { title: 'Anxiety Treatment Without Benzodiazepines', timing: 'Throughout', sections: [
-        { t: 'Medications', meds: ['Sertraline', 'Escitalopram', 'Paroxetine', 'Venlafaxine', 'Duloxetine', 'Buspirone', 'Hydroxyzine'], items: [
-          'SSRIs/SNRIs first-line for anxiety and panic; buspirone; hydroxyzine as needed.',
-          'CBT for anxiety and insomnia (CBT-I).'
-        ]},
-        { t: 'Goals', goals: ['Benzodiazepine-free', 'Anxiety managed with non-addictive treatment', 'CBT skills', 'Outpatient follow-up'] }
-      ]}
-    ]
-  },
-  can: {
-    title: 'Cannabis Use Disorder',
-    sub: 'No FDA-approved medication. Supportive withdrawal care plus psychosocial treatment.',
-    phases: [
-      { title: 'Withdrawal Management', timing: 'Days 1–14', sections: [
-        { t: 'Key Points', items: [
-          'Irritability, insomnia, reduced appetite, anxiety and cravings — begins in 1–2 days, peaks days 2–6.',
-          'Supportive care, sleep hygiene, hydration and nutrition.'
-        ]},
-        { t: 'Medications (off-label)', meds: ['Gabapentin', 'Mirtazapine', 'Hydroxyzine', 'Trazodone', 'N-acetylcysteine', 'Nabiximols'], items: [
-          'Gabapentin; mirtazapine for sleep and appetite; hydroxyzine or trazodone.',
-          'N-acetylcysteine has some evidence in adolescents and young adults; nabiximols is investigational.'
-        ]}
-      ]},
-      { title: 'Psychosocial Treatment', timing: 'Ongoing', sections: [
-        { t: 'Psychosocial Components', items: [ 'Motivational enhancement therapy (MET), CBT, contingency management, mindfulness-based relapse prevention (MBRP).' ] },
-        { t: 'Goals', goals: ['Abstinence or reduced use', 'Improved sleep and mood', 'Coping skills for cravings'] }
-      ]},
-      { title: 'Co-occurring Disorders & Complications', timing: 'Throughout', sections: [
-        { t: 'Key Points', meds: ['Haloperidol', 'Droperidol', 'Capsaicin cream', 'Lithium', 'Buspirone', 'Bupropion', 'Topiramate'], items: [
-          '<b>Psychosis:</b> cannabis worsens the course of psychotic disorders — antipsychotic per prescriber and strong abstinence focus.',
-          '<b>Cannabinoid hyperemesis syndrome:</b> cyclic vomiting relieved by hot showers. Topical capsaicin; haloperidol or droperidol in ED settings; abstinence is definitive.',
-          'Anxiety and depression: buspirone, SSRIs; bupropion or topiramate as indicated.'
-        ]}
-      ]}
-    ]
-  }
-};
-const PATHWAY_COLORS = {aud:'#ffb74d',oud:'#81c995',stim:'#ce93d8',bzd:'#4fc3f7',can:'#a5d6a7'};
-
-function renderPathways(){
-  const chev = '<svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>';
-  let html = '';
-  Object.entries(PATHWAYS).forEach(([id, pw], idx) => {
-    const c = PATHWAY_COLORS[id];
-    html += `<div class="pathway-panel${idx === 0 ? ' active' : ''}" id="pw-${id}"><div class="pw-header"><div class="pw-title" style="color:${c}">${pw.title}</div><div class="pw-sub">${pw.sub}</div></div><div class="phases">`;
-    pw.phases.forEach((ph, i) => {
-      html += `<div class="phase${i === 0 ? ' open' : ''}"><div class="phase-header" onclick="togglePhase(this)"><div class="phase-num" style="background:${c}22;color:${c}">${i + 1}</div><div class="phase-title-wrap"><div class="phase-title">${ph.title}</div><div class="phase-timing">${ph.timing}</div></div>${chev}</div><div class="phase-body">`;
-      ph.sections.forEach(s => {
-        html += `<div class="pw-section"><div class="pw-section-title">${s.t}</div>`;
-        if (s.items) html += '<div class="pw-items">' + s.items.map(t => `<div class="pw-item"><div class="pw-dot" style="background:${c}"></div><div>${t}</div></div>`).join('') + '</div>';
-        if (s.meds) html += '<div class="pw-meds">' + s.meds.map(m => `<span class="pw-med" style="background:${c}1a;color:${c};border-color:${c}44">${m}</span>`).join('') + '</div>';
-        if (s.goals) html += '<div class="pw-goals">' + s.goals.map(g => `<span class="pw-goal">${g}</span>`).join('') + '</div>';
-        html += '</div>';
-      });
-      if (ph.note) html += `<div class="pw-note">${ph.note}</div>`;
-      html += '</div></div>';
-    });
-    html += '</div></div>';
-  });
-  document.getElementById('pathwayRoot').innerHTML = html;
-}
-renderPathways();
-
 /* ── Tab switching ── */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -398,6 +775,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 /* ── Pathway nav ── */
+const PATHWAY_COLORS = {aud:'#ffb74d',oud:'#81c995',stim:'#ce93d8',bzd:'#4fc3f7',can:'#a5d6a7'};
 document.querySelectorAll('.pnav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const pw = btn.dataset.pw;
@@ -411,63 +789,57 @@ document.querySelectorAll('.pnav-btn').forEach(btn => {
     document.getElementById('pw-' + pw).classList.add('active');
   });
 });
+// Set initial active style
 (function(){const b=document.querySelector('.pnav-btn[data-pw="aud"]');if(b){const c=PATHWAY_COLORS.aud;b.style.background=c+'22';b.style.color=c;b.style.borderColor=c+'66';}})();
 
 /* ── Phase accordion ── */
 function togglePhase(header) {
-  header.parentElement.classList.toggle('open');
+  const phase = header.parentElement;
+  phase.classList.toggle('open');
 }
 
 /* ── Medication reference ── */
 const CATEGORIES={withdrawal:{label:'Withdrawal Mgmt',color:'#4fc3f7'},opioid:{label:'Opioid Use Disorder',color:'#81c995'},alcohol:{label:'Alcohol Use Disorder',color:'#ffb74d'},antidepressant:{label:'Antidepressant',color:'#ce93d8'},mood:{label:'Mood Stabilizer',color:'#f48fb1'},antipsychotic:{label:'Antipsychotic',color:'#80cbc4'},'sleep-anxiety':{label:'Sleep / Anxiety',color:'#90caf9'}};
 const ORDER=['withdrawal','opioid','alcohol','antidepressant','mood','antipsychotic','sleep-anxiety'];
-
-const MEDS = [
-  /* Withdrawal management */
-  {name:'Diazepam',brand:'Valium',cat:'withdrawal',mechanism:'Positive allosteric modulator of GABA-A receptors — enhances inhibitory neurotransmission, reducing CNS hyperexcitability.',purpose:'First-line for alcohol and sedative withdrawal; prevents seizures and delirium tremens.',uses:['Alcohol withdrawal','Benzodiazepine withdrawal','Seizure prophylaxis'],warn:'Abuse potential; monitor closely in SUD settings. Long half-life reduces breakthrough symptoms.'},
-  {name:'Lorazepam',brand:'Ativan',cat:'withdrawal',mechanism:'GABA-A positive allosteric modulator; intermediate half-life with no active metabolites (glucuronidation only).',purpose:'Withdrawal management when hepatic function is impaired or in older adults.',uses:['Alcohol withdrawal','Liver disease','Older adults'],warn:'Shorter half-life — more breakthrough and rebound symptoms between doses.'},
-  {name:'Clonazepam',brand:'Klonopin',cat:'withdrawal',mechanism:'GABA-A positive allosteric modulator with a long half-life (≈30–40 h).',purpose:'Alternative long-acting agent for benzodiazepine tapers when diazepam is not suitable.',uses:['Benzodiazepine taper','Panic disorder','Seizure disorders'],warn:'Abuse potential; additive respiratory depression with opioids and alcohol.'},
-  {name:'Clonidine',brand:'Catapres',cat:'withdrawal',mechanism:'Central alpha-2 adrenergic agonist — reduces noradrenergic outflow from the locus coeruleus.',purpose:'Relieves autonomic symptoms of opioid withdrawal (sweating, restlessness, tachycardia, anxiety).',uses:['Opioid withdrawal','Autonomic hyperactivity'],warn:'Hold for hypotension or bradycardia; rebound hypertension if stopped abruptly.'},
-  {name:'Phenobarbital',brand:'Luminal',cat:'withdrawal',mechanism:'Barbiturate — increases duration of GABA-A chloride channel opening; long half-life.',purpose:'Benzodiazepine-resistant or complicated alcohol withdrawal; alternative sedative-withdrawal protocols.',uses:['Resistant alcohol withdrawal','Sedative withdrawal'],warn:'Narrow therapeutic window; respiratory depression — use in closely monitored settings.'},
-  {name:'Baclofen',brand:'Lioresal',cat:'withdrawal',mechanism:'GABA-B receptor agonist — reduces excitatory neurotransmitter release.',purpose:'Adjunct for alcohol withdrawal and craving reduction (off-label).',uses:['Alcohol craving','Mild alcohol withdrawal','Liver disease'],warn:'Sedation; withdrawal seizures if stopped abruptly after regular use; renal dosing.'},
-  /* Opioid use disorder */
-  {name:'Buprenorphine',brand:'Suboxone · Subutex · Sublocade',cat:'opioid',mechanism:'High-affinity partial mu-opioid agonist and kappa antagonist; ceiling effect on respiratory depression.',purpose:'First-line MOUD — suppresses withdrawal and craving and blocks the effect of other opioids.',uses:['OUD maintenance','Opioid withdrawal','Low-dose (Bernese) induction','Chronic pain with OUD'],warn:'Precipitated withdrawal if started too early, especially after fentanyl or methadone.'},
-  {name:'Naltrexone',brand:'Revia · Vivitrol',cat:'opioid',mechanism:'Competitive mu-opioid receptor antagonist — blocks opioid effects and reduces alcohol reward.',purpose:'Relapse prevention for AUD and OUD; XR injection once monthly.',uses:['Alcohol use disorder','Opioid use disorder','Craving reduction'],warn:'Requires 7–10 opioid-free days; precipitates withdrawal. Avoid in acute hepatitis or liver failure.'},
-  {name:'Methadone',brand:'Dolophine · Methadose',cat:'opioid',mechanism:'Full mu-opioid agonist with long half-life; NMDA antagonist activity.',purpose:'MOUD through an opioid treatment program (OTP); suited to high tolerance or prior buprenorphine failure.',uses:['OUD maintenance','Pregnancy','High tolerance'],warn:'QTc prolongation; respiratory depression with sedatives; slow titration due to accumulation.'},
-  /* Alcohol use disorder */
-  {name:'Acamprosate',brand:'Campral',cat:'alcohol',mechanism:'Modulates glutamate (NMDA) and GABA systems — restores balance disrupted by chronic alcohol use.',purpose:'Maintains abstinence after withdrawal; reduces protracted withdrawal symptoms.',uses:['Abstinence maintenance','Liver disease','Patients on opioids'],warn:'Contraindicated with CrCl <30; dose-adjust for CrCl 30–50. Three-times-daily dosing.'},
-  {name:'Disulfiram',brand:'Antabuse',cat:'alcohol',mechanism:'Inhibits aldehyde dehydrogenase — acetaldehyde builds up after alcohol, causing an aversive reaction.',purpose:'Aversive deterrent for motivated patients committed to abstinence.',uses:['Supervised abstinence'],warn:'Avoid in cardiac disease, psychosis, pregnancy and liver disease. Never give while intoxicated.'},
-  {name:'Topiramate',brand:'Topamax',cat:'alcohol',mechanism:'Enhances GABA-A activity, antagonizes AMPA/kainate glutamate receptors, blocks sodium channels.',purpose:'Reduces heavy drinking and craving (off-label).',uses:['Alcohol use disorder','Cocaine use (limited evidence)'],warn:'Cognitive slowing, paresthesias, kidney stones; teratogenic. Slow titration.'},
-  {name:'Gabapentin',brand:'Neurontin',cat:'alcohol',mechanism:'Binds alpha-2-delta subunit of voltage-gated calcium channels — reduces excitatory neurotransmitter release.',purpose:'Reduces craving, insomnia and protracted withdrawal in AUD (off-label); adjunct in mild withdrawal.',uses:['Alcohol use disorder','Insomnia','Cannabis withdrawal','Neuropathic pain'],warn:'Misuse potential, especially with opioids; renal dose adjustment.'},
-  /* Antidepressants */
-  {name:'Sertraline',brand:'Zoloft',cat:'antidepressant',mechanism:'Selective serotonin reuptake inhibitor (SSRI).',purpose:'First-line for depression, anxiety and PTSD in co-occurring SUD.',uses:['Depression','Anxiety disorders','PTSD','Panic disorder'],warn:'Early GI upset and activation; serotonin syndrome risk with other serotonergic drugs.'},
-  {name:'Bupropion',brand:'Wellbutrin · Zyban',cat:'antidepressant',mechanism:'Norepinephrine and dopamine reuptake inhibitor; nicotinic antagonist.',purpose:'Depression, smoking cessation; off-label with naltrexone for methamphetamine use disorder.',uses:['Depression','Nicotine dependence','Methamphetamine use (off-label)','ADHD (off-label)'],warn:'Lowers seizure threshold — avoid with seizure history, eating disorders, or alcohol/sedative withdrawal.'},
-  {name:'Mirtazapine',brand:'Remeron',cat:'antidepressant',mechanism:'Alpha-2 antagonist and 5-HT2/5-HT3 and H1 antagonist — increases norepinephrine and serotonin release.',purpose:'Depression with insomnia or poor appetite; some evidence in methamphetamine use disorder.',uses:['Depression','Insomnia','Poor appetite','Methamphetamine use (off-label)'],warn:'Sedation and weight gain; more sedating at lower doses.'},
-  {name:'Venlafaxine',brand:'Effexor XR',cat:'antidepressant',mechanism:'Serotonin–norepinephrine reuptake inhibitor (SNRI).',purpose:'Depression and anxiety disorders, including after benzodiazepine taper.',uses:['Depression','Generalized anxiety','Panic disorder'],warn:'Dose-related blood pressure increase; discontinuation syndrome if stopped abruptly.'},
-  {name:'Duloxetine',brand:'Cymbalta',cat:'antidepressant',mechanism:'Serotonin–norepinephrine reuptake inhibitor (SNRI).',purpose:'Depression and anxiety with co-occurring chronic or neuropathic pain.',uses:['Depression','Chronic pain','Neuropathic pain','Generalized anxiety'],warn:'Avoid with heavy alcohol use or significant liver disease (hepatotoxicity).'},
-  {name:'Trazodone',brand:'Desyrel',cat:'antidepressant',mechanism:'Serotonin antagonist and reuptake inhibitor (5-HT2A antagonist); H1 and alpha-1 antagonism.',purpose:'Non-habit-forming sleep aid in SUD treatment; antidepressant at higher doses.',uses:['Insomnia','Depression'],warn:'Orthostatic hypotension, next-day sedation; rare priapism.'},
-  {name:'Vortioxetine',brand:'Trintellix',cat:'antidepressant',mechanism:'Serotonin reuptake inhibitor plus multiple serotonin-receptor modulation.',purpose:'Depression, particularly with cognitive complaints.',uses:['Depression','Cognitive symptoms of depression'],warn:'Nausea is common; serotonin syndrome risk with other serotonergic drugs.'},
-  /* Mood stabilizers */
-  {name:'Lithium',brand:'Lithobid',cat:'mood',mechanism:'Modulates second-messenger systems (inositol, GSK-3); neuroprotective.',purpose:'Bipolar disorder maintenance; strong anti-suicide effect.',uses:['Bipolar disorder','Suicide risk reduction'],warn:'Narrow therapeutic index — levels, renal and thyroid monitoring; toxicity with dehydration.'},
-  {name:'Valproate',brand:'Depakote',cat:'mood',mechanism:'Increases GABA availability, blocks sodium and T-type calcium channels.',purpose:'Bipolar mania and mixed states; adjunct for alcohol or benzodiazepine withdrawal.',uses:['Bipolar disorder','Withdrawal adjunct'],warn:'Hepatotoxicity and pancreatitis; highly teratogenic. Avoid in liver disease and pregnancy.'},
-  {name:'Lamotrigine',brand:'Lamictal',cat:'mood',mechanism:'Blocks voltage-gated sodium channels; reduces glutamate release.',purpose:'Bipolar depression maintenance.',uses:['Bipolar depression','Mood stabilization'],warn:'Stevens-Johnson syndrome risk — slow titration required; restart titration after missed doses.'},
-  {name:'Carbamazepine',brand:'Tegretol',cat:'mood',mechanism:'Blocks voltage-gated sodium channels.',purpose:'Bipolar disorder; adjunct for alcohol and benzodiazepine withdrawal.',uses:['Bipolar disorder','Withdrawal adjunct','Seizure disorders'],warn:'Strong enzyme inducer (lowers methadone and buprenorphine levels); hyponatremia, blood dyscrasias.'},
-  /* Antipsychotics */
-  {name:'Quetiapine',brand:'Seroquel',cat:'antipsychotic',mechanism:'Second-generation antipsychotic — D2 and 5-HT2A antagonist with strong H1 antagonism.',purpose:'Psychosis, bipolar disorder and bipolar depression.',uses:['Bipolar disorder','Psychosis','Stimulant-induced psychosis'],warn:'Misuse potential in SUD settings; avoid as a routine sleep aid. Metabolic effects.'},
-  {name:'Aripiprazole',brand:'Abilify',cat:'antipsychotic',mechanism:'D2 and 5-HT1A partial agonist, 5-HT2A antagonist.',purpose:'Schizophrenia, bipolar disorder, adjunct in depression.',uses:['Schizophrenia','Bipolar disorder','Depression (adjunct)'],warn:'Akathisia; impulse-control problems (gambling, compulsive behaviors).'},
-  {name:'Olanzapine',brand:'Zyprexa',cat:'antipsychotic',mechanism:'D2 and 5-HT2A antagonist with broad receptor activity.',purpose:'Schizophrenia, acute agitation, bipolar mania.',uses:['Schizophrenia','Bipolar mania','Acute agitation'],warn:'Significant weight gain and metabolic syndrome; sedation.'},
-  {name:'Risperidone',brand:'Risperdal',cat:'antipsychotic',mechanism:'D2 and 5-HT2A antagonist.',purpose:'Psychosis, including stimulant-induced psychosis; bipolar mania.',uses:['Psychosis','Stimulant-induced psychosis','Bipolar mania'],warn:'Hyperprolactinemia; extrapyramidal symptoms at higher doses.'},
-  {name:'Lurasidone',brand:'Latuda',cat:'antipsychotic',mechanism:'D2 and 5-HT2A antagonist; 5-HT7 antagonist.',purpose:'Bipolar depression and schizophrenia with a favorable metabolic profile.',uses:['Bipolar depression','Schizophrenia'],warn:'Must be taken with food (≥350 kcal); akathisia.'},
-  /* Sleep / anxiety */
-  {name:'Hydroxyzine',brand:'Vistaril · Atarax',cat:'sleep-anxiety',mechanism:'H1 antihistamine with anticholinergic and mild anxiolytic effect.',purpose:'Non-addictive as-needed treatment for anxiety and sleep.',uses:['Anxiety','Insomnia','Withdrawal symptoms','Pruritus'],warn:'Sedation, anticholinergic effects; QTc caution at higher doses.'},
-  {name:'Prazosin',brand:'Minipress',cat:'sleep-anxiety',mechanism:'Alpha-1 adrenergic antagonist — reduces noradrenergic activity during sleep.',purpose:'Trauma-related nightmares in PTSD.',uses:['PTSD nightmares','Sleep disturbance'],warn:'First-dose orthostatic hypotension and syncope — start low, titrate.'},
-  {name:'Buspirone',brand:'Buspar',cat:'sleep-anxiety',mechanism:'5-HT1A partial agonist.',purpose:'Non-addictive treatment for generalized anxiety, including after benzodiazepine taper.',uses:['Generalized anxiety','Benzodiazepine-free anxiety care'],warn:'Takes 2–4 weeks for effect; not useful as-needed. Dizziness.'}
+const MEDS=[
+{name:'Diazepam',brand:'Valium',cat:'withdrawal',mechanism:'Positive allosteric modulator of GABA-A receptors — enhances inhibitory neurotransmission, reducing CNS hyperexcitability.',purpose:'First-line for alcohol and sedative withdrawal; prevents seizures and delirium tremens.',uses:['Alcohol withdrawal','Benzodiazepine withdrawal','Seizure prophylaxis'],warn:'Abuse potential; monitor closely in SUD settings. Long half-life reduces breakthrough symptoms.'},
+{name:'Lorazepam',brand:'Ativan',cat:'withdrawal',mechanism:'GABA-A positive allosteric modulator. Shorter half-life than diazepam; no active metabolites — preferred in hepatic impairment.',purpose:'Alcohol and sedative withdrawal management; preferred when liver function is compromised.',uses:['Alcohol withdrawal','Hepatic impairment patients','Acute agitation'],warn:'Higher abuse potential than longer-acting agents. Risk of cumulative sedation with repeat dosing.'},
+{name:'Clonazepam',brand:'Klonopin',cat:'withdrawal',mechanism:'GABA-A positive allosteric modulator with a long half-life (30–40 hrs) — smooth plasma levels support gradual dose reduction.',purpose:'Alternative long-acting agent for benzodiazepine taper when diazepam is not suitable.',uses:['Benzodiazepine taper','Panic disorder','Seizure disorders'],warn:'Abuse potential; monitor closely in SUD settings. Additive respiratory depression with opioids and alcohol.'},
+{name:'Clonidine',brand:'Catapres',cat:'withdrawal',mechanism:'Central alpha-2 adrenergic agonist — suppresses noradrenergic hyperactivity from the locus coeruleus.',purpose:'Opioid withdrawal symptom relief (sweating, anxiety, tachycardia, hypertension). Not a controlled substance.',uses:['Opioid withdrawal','Alcohol withdrawal adjunct','PTSD nightmares (higher doses)'],warn:'Hypotension risk — monitor BP. Does not prevent seizures or treat craving.'},
+{name:'Phenobarbital',brand:'Luminal',cat:'withdrawal',mechanism:'Potentiates GABA-A receptors and inhibits glutamate (AMPA/kainate). Long half-life of 80–120 hours provides natural taper.',purpose:'Long-acting alcohol and benzodiazepine withdrawal management; useful in high-tolerance patients.',uses:['Severe alcohol withdrawal','High-dose benzodiazepine withdrawal','Cross-tolerance protocols'],warn:'CNS/respiratory depression risk. Requires monitoring. Less diversion concern than benzodiazepines in some protocols.'},
+{name:'Baclofen',brand:'Lioresal / Gablofen',cat:'withdrawal',mechanism:'GABA-B receptor agonist — activates inhibitory presynaptic receptors, reducing glutamate and dopamine release in the nucleus accumbens and mesolimbic reward pathway.',purpose:'Alcohol withdrawal management and craving reduction. Reduces anxiety and autonomic symptoms of withdrawal. Emerging evidence for alcohol use disorder maintenance.',uses:['Alcohol withdrawal','Alcohol craving reduction','Muscle spasticity comorbidity','Post-acute withdrawal anxiety'],warn:'CNS depression and sedation — additive with other CNS depressants. Abrupt discontinuation can cause seizures and hallucinations. Renal dose adjustment required. Not FDA-approved for AUD but widely used off-label.'},
+{name:'Buprenorphine',brand:'Suboxone / Sublocade',cat:'opioid',mechanism:'Partial mu-opioid receptor agonist and kappa antagonist. Ceiling effect on respiratory depression. Very high receptor affinity blocks other opioids.',purpose:'Reduces withdrawal, cravings, and opioid-related mortality. Cornerstone of medication-assisted treatment (MAT).',uses:['Opioid use disorder','Chronic pain (off-label)','Opioid withdrawal induction'],warn:'Precipitates withdrawal if given before patient is in moderate withdrawal (COWS ≥8–12). Diversion risk for SL formulations.'},
+{name:'Naltrexone',brand:'Vivitrol / ReVia',cat:'opioid',mechanism:'Competitive opioid receptor antagonist (mu, kappa, delta). Blocks euphoric effects of opioids and reduces alcohol reward via endogenous opioid system.',purpose:'Blocks opioid euphoria; reduces alcohol craving and relapse. IM formulation (Vivitrol) improves adherence.',uses:['Opioid use disorder','Alcohol use disorder','Post-detox maintenance'],warn:'Requires full opioid detox (7–10 days) before initiation — precipitates severe withdrawal otherwise. Hepatotoxicity at high doses.'},
+{name:'Methadone',brand:'Dolophine / Methadose',cat:'opioid',mechanism:'Full mu-opioid agonist with very long half-life (24–36 hrs). Also NMDA receptor antagonist — relevant for pain and potentially reducing sensitization.',purpose:'Suppresses opioid withdrawal and cravings with once-daily dosing stability. Reduces illicit opioid use and overdose mortality.',uses:['Opioid use disorder (OTP programs)','Chronic pain','Long-term MAT'],warn:'QTc prolongation risk — ECG monitoring required. Dispensed only via licensed OTPs. Significant overdose risk if diverted. Many drug interactions.'},
+{name:'Acamprosate',brand:'Campral',cat:'alcohol',mechanism:'Modulates NMDA glutamate receptors and GABA activity — restores neurochemical balance disrupted by chronic alcohol use and withdrawal.',purpose:'Reduces protracted abstinence syndrome and dysphoria after alcohol cessation. Supports sustained sobriety.',uses:['Alcohol use disorder maintenance','Post-acute withdrawal syndrome','Anxiety in early recovery'],warn:'Renally cleared — dose adjust in renal impairment. Must be abstinent to start. Less effective with active drinking.'},
+{name:'Disulfiram',brand:'Antabuse',cat:'alcohol',mechanism:'Irreversibly inhibits aldehyde dehydrogenase → acetaldehyde accumulates after alcohol ingestion → aversive flushing, nausea, palpitations, hypotension.',purpose:'Deterrent medication — creates adverse physiologic reaction to alcohol. Most effective under supervised administration.',uses:['Alcohol use disorder (motivated patients)','Supervised residential settings','Short-term abstinence reinforcement'],warn:'Reaction can be severe or life-threatening. Requires liver function screening. Many drug interactions. Never administer without consent.'},
+{name:'Topiramate',brand:'Topamax',cat:'alcohol',mechanism:'Blocks sodium channels, enhances GABA-A, antagonizes AMPA/kainate glutamate receptors. Reduces dopamine release in nucleus accumbens — dampens alcohol reward.',purpose:'Reduces heavy drinking days, cravings, and alcohol reward. Strong off-label evidence for AUD.',uses:['Alcohol use disorder (off-label)','Binge eating disorder','Migraine prophylaxis'],warn:'Cognitive side effects ("Dopamax") — word-finding difficulty, psychomotor slowing. Kidney stones. Metabolic acidosis. Teratogenic.'},
+{name:'Gabapentin',brand:'Neurontin',cat:'alcohol',mechanism:'Binds alpha-2-delta subunit of voltage-gated calcium channels → reduces excitatory neurotransmitter release. Indirectly modulates GABA activity.',purpose:'Alcohol withdrawal adjunct and post-acute withdrawal syndrome; anxiety and insomnia in SUD recovery.',uses:['Alcohol withdrawal (adjunct)','Post-acute withdrawal syndrome','Anxiety / insomnia in recovery','Neuropathic pain'],warn:'Misuse potential — especially in opioid use disorder populations. Sedation. Abrupt discontinuation can cause withdrawal.'},
+{name:'Sertraline',brand:'Zoloft',cat:'antidepressant',mechanism:'Selective serotonin reuptake inhibitor (SSRI) — blocks SERT, increasing synaptic serotonin availability. Therapeutic effect builds over 2–4 weeks.',purpose:'First-line for depression and anxiety disorders. FDA-approved for PTSD — common in SUD patients.',uses:['MDD','PTSD','GAD','Panic disorder','OCD','Social anxiety'],warn:'Activation/agitation in early treatment. Sexual dysfunction. Avoid in bipolar without mood stabilizer coverage.'},
+{name:'Bupropion',brand:'Wellbutrin / Zyban',cat:'antidepressant',mechanism:'Norepinephrine-dopamine reuptake inhibitor (NDRI). Also nicotinic acetylcholine receptor antagonist — relevant for smoking cessation.',purpose:'Depression with fatigue, low motivation, or ADHD comorbidity. Preferred in SUD: lowest mania switch risk, no sexual dysfunction, weight neutral.',uses:['MDD with low energy','ADHD comorbidity','Smoking cessation','Bipolar depression (cautious use)'],warn:'Lowers seizure threshold — contraindicated in eating disorders, active heavy alcohol use, seizure history. Avoid in high anxiety.'},
+{name:'Mirtazapine',brand:'Remeron',cat:'antidepressant',mechanism:'Alpha-2 antagonist (disinhibits NE and 5-HT release) + 5-HT2/5-HT3 antagonism + potent H1 antihistamine. More sedating at lower doses.',purpose:'Depression with insomnia, poor appetite, weight loss, or nausea. Anxiolytic properties without abuse potential.',uses:['MDD with insomnia','Depression with weight loss/nausea','Anxious depression','SUD insomnia (non-controlled)'],warn:'Significant weight gain. Sedation. Metabolic effects. Paradoxically more sedating at lower doses (15mg vs 30mg).'},
+{name:'Venlafaxine',brand:'Effexor',cat:'antidepressant',mechanism:'Serotonin-norepinephrine reuptake inhibitor (SNRI). Serotonergic at low doses; noradrenergic effect emerges at ≥150mg.',purpose:'Depression with fatigue, chronic pain, or GAD. Dual mechanism useful when SSRI response is partial.',uses:['MDD','GAD','Panic disorder','Social anxiety','Neuropathic pain'],warn:'Severe discontinuation syndrome — taper carefully. Blood pressure elevation at higher doses. Significant mania switch risk in bipolar.'},
+{name:'Duloxetine',brand:'Cymbalta',cat:'antidepressant',mechanism:'SNRI — balanced serotonin and norepinephrine reuptake inhibition. Notable analgesic properties via descending pain pathway modulation.',purpose:'Depression with somatic symptoms or comorbid chronic pain (fibromyalgia, diabetic neuropathy, musculoskeletal pain).',uses:['MDD with pain','GAD','Fibromyalgia','Diabetic neuropathy'],warn:'Hepatotoxicity risk — avoid in heavy alcohol use or liver disease (important in SUD). Nausea. Discontinuation syndrome.'},
+{name:'Trazodone',brand:'Desyrel',cat:'antidepressant',mechanism:'Serotonin antagonist and reuptake inhibitor (SARI). Blocks 5-HT2A receptors and weakly inhibits SERT. H1 and alpha-1 antagonism cause sedation.',purpose:'Primarily used at sub-antidepressant doses (50–150mg) for insomnia in SUD settings. Non-controlled, no abuse potential.',uses:['Insomnia in SUD recovery','SSRI augmentation for sleep','Anxious depression'],warn:'Orthostatic hypotension. Rare priapism. At antidepressant doses (300–600mg), poor tolerability. Not first-line as primary antidepressant.'},
+{name:'Vortioxetine',brand:'Trintellix',cat:'antidepressant',mechanism:'Multimodal: SERT inhibitor + 5-HT3/5-HT7/5-HT1D antagonist + 5-HT1A/1B partial agonist. Unique procognitive effects via multiple serotonin receptor subtypes.',purpose:'Depression with prominent cognitive symptoms (concentration, mental fog). Useful when cognitive clarity is a treatment priority.',uses:['MDD with cognitive symptoms','Partial SSRI response','Depression in older adults'],warn:'GI side effects (nausea). Expensive. Serotonin syndrome risk with other serotonergic agents.'},
+{name:'Lithium',brand:'Lithobid / Eskalith',cat:'mood',mechanism:'Inhibits GSK-3β and inositol monophosphatase; modulates dopamine and glutamate signaling; promotes neurogenesis via BDNF.',purpose:'Gold standard for bipolar I. Unique evidence for suicide prevention — the only psychiatric medication with robust antisuicidal data.',uses:['Bipolar I disorder','Mania prevention','Bipolar depression','Suicide risk reduction','Antidepressant augmentation in TRD'],warn:'Narrow therapeutic index — levels must be monitored (0.6–1.2 mEq/L). Renal and thyroid monitoring required. Teratogenic. Toxicity: coarse tremor, ataxia, confusion.'},
+{name:'Valproate',brand:'Depakote / Depakene',cat:'mood',mechanism:'Blocks voltage-gated sodium channels, enhances GABA synthesis/activity, inhibits GSK-3β, and inhibits HDAC (epigenetic effects).',purpose:'Acute mania (especially mixed/dysphoric), rapid cycling bipolar, migraine prophylaxis, alcohol withdrawal support. Most versatile mood stabilizer in SUD settings.',uses:['Bipolar I (mixed/dysphoric mania)','Rapid cycling','Migraine prophylaxis','Epilepsy','Alcohol withdrawal adjunct'],warn:'Highly teratogenic — avoid in women of reproductive age. Weight gain, hair loss, hepatotoxicity, thrombocytopenia, PCOS risk.'},
+{name:'Lamotrigine',brand:'Lamictal',cat:'mood',mechanism:'Blocks voltage-gated sodium and calcium channels; reduces glutamate/aspartate release. Limbic system selectivity underlies mood effects.',purpose:'Bipolar depression maintenance — strongest evidence for the depressive phase. Weight neutral, cognitively clean, safer in women of reproductive age.',uses:['Bipolar II disorder','Bipolar depression prevention','BPD emotional dysregulation','TRD augmentation'],warn:'Serious rash risk (Stevens-Johnson Syndrome) — requires slow titration over weeks. Minimal antimanic efficacy. Valproate doubles lamotrigine levels — reduce dose.'},
+{name:'Carbamazepine',brand:'Tegretol / Equetro',cat:'mood',mechanism:'Potent voltage-gated sodium channel blocker — stabilizes inactivated channel state, reducing repetitive neuronal firing.',purpose:'FDA-approved for acute mania (Equetro). Used in lithium-resistant or mixed mania, and comorbid seizure disorders.',uses:['Acute mania (FDA-approved)','Lithium-resistant bipolar','Trigeminal neuralgia','Epilepsy','Rapid cycling'],warn:'Potent CYP3A4 inducer — major drug interactions (oral contraceptives, many psychotropics). Agranulocytosis risk — CBC monitoring. Hyponatremia. Teratogenic.'},
+{name:'Quetiapine',brand:'Seroquel',cat:'antipsychotic',mechanism:'D2 antagonist + 5-HT2A antagonist + 5-HT1A partial agonist + potent H1 and alpha-1 antagonism. Broad receptor profile produces sedation and mood effects.',purpose:'Bipolar mania and depression (FDA-approved for both phases). Widely used off-label for insomnia, anxiety, and agitation in SUD settings.',uses:['Bipolar I/II (mania and depression)','Schizophrenia','MDD adjunct','Insomnia in SUD (off-label)'],warn:'Metabolic syndrome, weight gain, sedation, orthostatic hypotension. QTc prolongation. High misuse/diversion concern in SUD — monitor carefully.'},
+{name:'Aripiprazole',brand:'Abilify',cat:'antipsychotic',mechanism:'D2 and 5-HT1A partial agonist + 5-HT2A antagonist. Dopamine system stabilizer — activates in hypodopaminergic states, dampens in hyperdopaminergic states.',purpose:'Bipolar mania maintenance. Weight-neutral antipsychotic; low metabolic burden. Useful in SUD when metabolic side effects are a concern.',uses:['Bipolar I (mania)','Schizophrenia','MDD adjunct',"Tourette's"],warn:'Activating — can worsen insomnia and akathisia. Compulsive behaviors (gambling, hypersexuality) reported.'},
+{name:'Olanzapine',brand:'Zyprexa',cat:'antipsychotic',mechanism:'D2, 5-HT2A, H1, M1, alpha-1 antagonism — broad multi-receptor blockade. Fast-acting due to IM formulation availability.',purpose:'Acute mania and psychosis. Rapid sedation in agitation. Combined with fluoxetine (Symbyax) for bipolar depression.',uses:['Acute mania','Schizophrenia','Bipolar depression (with fluoxetine)','Acute agitation (IM)'],warn:'Most metabolically burdensome antipsychotic — significant weight gain, dyslipidemia, diabetes risk. Use caution in SUD with metabolic concerns.'},
+{name:'Risperidone',brand:'Risperdal / Perseris',cat:'antipsychotic',mechanism:'Potent D2 and 5-HT2A antagonist. Higher D2 affinity than most second-generation agents — more extrapyramidal side effect risk.',purpose:'Acute mania and schizophrenia. Available as long-acting injectable — valuable for adherence in SUD populations.',uses:['Bipolar I (mania)','Schizophrenia','Schizoaffective disorder','Long-acting injectable (adherence)'],warn:'EPS and tardive dyskinesia risk higher than other atypicals. Hyperprolactinemia. Metabolic effects. QTc prolongation.'},
+{name:'Lurasidone',brand:'Latuda',cat:'antipsychotic',mechanism:'D2 and 5-HT2A antagonist + 5-HT7 antagonist + 5-HT1A partial agonist. 5-HT7 antagonism may contribute to procognitive and antidepressant effects.',purpose:'Bipolar depression (FDA-approved) and schizophrenia. Weight neutral with strong bipolar depression data.',uses:['Bipolar depression','Schizophrenia','Depression with mixed features'],warn:'Must be taken with food (≥350 calories) — absorption significantly reduced without food. Akathisia. Somnolence.'},
+{name:'Hydroxyzine',brand:'Vistaril / Atarax',cat:'sleep-anxiety',mechanism:'H1 antihistamine with anxiolytic properties. No GABAergic activity — distinct from benzodiazepines. Mildly anticholinergic.',purpose:'Non-controlled anxiolytic and sleep aid — preferred over benzodiazepines in SUD settings. No dependence, no abuse potential.',uses:['Anxiety in SUD recovery','Insomnia','Alcohol withdrawal agitation (adjunct)','Pruritus'],warn:'Sedation, dry mouth, urinary retention (anticholinergic). Tolerance to sedation may develop. QTc prolongation at high doses.'},
+{name:'Prazosin',brand:'Minipress',cat:'sleep-anxiety',mechanism:'Alpha-1 adrenergic receptor antagonist — blocks noradrenergic activation at postsynaptic receptors, particularly during REM sleep.',purpose:'PTSD-associated nightmares and sleep disturbance — highly prevalent in SUD populations. Reduces nightmare frequency and intensity.',uses:['PTSD nightmares','Sleep disturbance in PTSD','Hyperarousal in SUD/PTSD comorbidity'],warn:'Orthostatic hypotension — start low, titrate slowly. First-dose syncope risk. Monitor BP. Not effective for all PTSD patients.'},
+{name:'Buspirone',brand:'Buspar',cat:'sleep-anxiety',mechanism:'5-HT1A partial agonist + D2 partial agonist. Non-benzodiazepine; no GABAergic mechanism. Requires 2–4 weeks for anxiolytic effect.',purpose:'Generalized anxiety in SUD recovery. No abuse potential, no sedation, no withdrawal syndrome — ideal for SUD populations.',uses:['GAD in SUD recovery','Anxiety augmentation with SSRIs','Chronic anxiety'],warn:'Does not work acutely — patients may abandon before therapeutic effect. No cross-tolerance with benzodiazepines. Not effective for panic disorder.'},
 ];
 
-const grid=document.getElementById('medGrid'),countLabel=document.getElementById('countLabel'),pillsEl=document.getElementById('filterPills'),searchInput=document.getElementById('searchInput');
+function buildCard(m){const c=CATEGORIES[m.cat];return`<div class="card"><div class="card-accent" style="background:${c.color}"></div><div class="card-body"><div class="card-top"><div><div class="drug-name">${m.name}</div><div class="drug-brand">${m.brand}</div></div><div class="cat-badge" style="background:${c.color}22;color:${c.color}">${c.label}</div></div><div class="divider"></div><div><div class="field-label">Mechanism</div><div class="field-text">${m.mechanism}</div></div><div><div class="field-label">Primary Purpose</div><div class="field-text">${m.purpose}</div></div><div><div class="field-label">Clinical Uses</div><div class="tags">${m.uses.map(u=>`<span class="tag">${u}</span>`).join('')}</div></div><div class="warn-row"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>${m.warn}</span></div></div></div>`;}
+
+const grid=document.getElementById('medGrid'),searchInput=document.getElementById('searchInput'),countLabel=document.getElementById('countLabel'),pillsEl=document.getElementById('filterPills');
 let activeFilter='all',searchQuery='';
-const WARN_SVG='<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
-function buildCard(m){const c=CATEGORIES[m.cat];return `<div class="card"><div class="card-accent" style="background:${c.color}"></div><div class="card-body"><div class="card-top"><div><div class="drug-name">${m.name}</div><div class="drug-brand">${m.brand}</div></div><div class="cat-badge" style="background:${c.color}22;color:${c.color}">${c.label}</div></div><div class="divider"></div><div><div class="field-label">Mechanism</div><div class="field-text">${m.mechanism}</div></div><div><div class="field-label">Primary Purpose</div><div class="field-text">${m.purpose}</div></div><div><div class="field-label">Clinical Uses</div><div class="tags">${m.uses.map(u=>`<span class="tag">${u}</span>`).join('')}</div></div>${m.warn?`<div class="warn-row">${WARN_SVG}<span>${m.warn}</span></div>`:''}</div></div>`;}
 function setActivePill(f){activeFilter=f;pillsEl.querySelectorAll('.pill').forEach(p=>{const a=p.dataset.filter===f;p.style.background='';p.style.color='';p.style.borderColor='';if(a){if(f==='all'){p.style.background='var(--text)';p.style.color='var(--bg)';p.style.borderColor='var(--text)';}else{const col=CATEGORIES[f].color;p.style.background=col;p.style.color='#0f1117';p.style.borderColor=col;}}});}
 function render(){const q=searchQuery.toLowerCase();const vis=MEDS.filter(m=>(activeFilter==='all'||m.cat===activeFilter)&&(!q||m.name.toLowerCase().includes(q)||m.brand.toLowerCase().includes(q)||m.purpose.toLowerCase().includes(q)||m.mechanism.toLowerCase().includes(q)||m.uses.some(u=>u.toLowerCase().includes(q))));let html='';(activeFilter==='all'?ORDER:[activeFilter]).forEach(cat=>{const meds=vis.filter(m=>m.cat===cat);if(!meds.length)return;const c=CATEGORIES[cat];html+=`<div class="section-header"><div class="section-header-line"></div><div class="section-header-label" style="color:${c.color}">${c.label.toUpperCase()}</div><div class="section-header-line"></div></div>`;meds.forEach(m=>{html+=buildCard(m);});});grid.innerHTML=html||`<div class="empty">No medications match your search.</div>`;countLabel.textContent=`${vis.length} medication${vis.length!==1?'s':''} shown`;}
 pillsEl.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{setActivePill(p.dataset.filter);render();}));
