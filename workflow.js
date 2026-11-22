@@ -18,7 +18,7 @@
     { id: 'bzd', label: 'Benzodiazepines / sedatives', pw: 'bzd' },
     { id: 'can', label: 'Cannabis', pw: 'can' }
   ];
-  const RULESET = 'Rule set v1.1 — approved by medical director 2026-11-19';
+  const RULESET = 'Rule set v1.2 (draft) — consolidated single plan; pending medical director approval';
   const STEPS = ['Intake', 'Safety & history', 'Withdrawal scores', 'Treatment plan'];
   const LAST = STEPS.length - 1;
 
@@ -118,171 +118,170 @@
   const ciwaBand = (t) => t < 10 ? ['Minimal', 'ok'] : t < 19 ? ['Mild–moderate', 'warn'] : ['Severe', 'bad'];
   const cowsBand = (t) => t < 5 ? ['No active withdrawal', 'ok'] : t <= 12 ? ['Mild', 'ok'] : t <= 24 ? ['Moderate', 'warn'] : t <= 36 ? ['Moderately severe', 'bad'] : ['Severe', 'bad'];
 
-  /* ── Rules engine ──
-     Returns an object per substance:
-     { sections: [{ title, items: [{ lvl: 'go'|'caution'|'avoid'|'info'|'alert', text, meds: [] }] }] }  */
+  /* ── Rules engine (v1.2) ──
+     One patient-level plan. Each medication is decided once, using every
+     substance and clinical factor together, so the plan can never recommend
+     a drug in one place and advise against it in another. */
   function ciwaInfo() { const r = sumScale(S.ciwa, CIWA); return r.done ? r : null; }
   function cowsInfo() { const r = sumScale(S.cows, COWS); return r.done ? r : null; }
 
-  function rulesAUD() {
-    const f = S.f, out = [];
-    const c = ciwaInfo();
-    const wd = [];
-    if (!c) wd.push({ lvl: 'alert', text: '<b>Score CIWA-Ar</b> (Step 3) to guide withdrawal management.' });
-    else {
-      const t = c.total, partial = c.done < c.n ? ` (partial — ${c.done}/${c.n} items scored)` : '';
-      if (t < 10) wd.push({ lvl: 'go', text: `<b>CIWA-Ar ${t} — minimal${partial}.</b> Supportive care and reassessment per protocol. Medication generally not indicated unless high-risk history.` });
-      else if (t < 19) wd.push({ lvl: 'caution', text: `<b>CIWA-Ar ${t} — mild–moderate${partial}.</b> Symptom-triggered benzodiazepine per facility protocol; reassess after each dose.` });
-      else wd.push({ lvl: 'avoid', text: `<b>CIWA-Ar ${t} — severe${partial}.</b> Notify prescriber now. Evaluate need for a higher level of care (medically managed/inpatient).` });
+  const GROUPS = ['Withdrawal', 'Maintenance', 'Co-occurring', 'Symptom relief', 'Safety & nutrition'];
+
+  function buildPlan() {
+    const f = S.f, sub = S.subs, preg = S.preg === 'yes';
+    const lines = [], avoid = new Map(), actions = [];
+    const no = (m, why) => { if (!avoid.has(m)) avoid.set(m, []); if (!avoid.get(m).includes(why)) avoid.get(m).push(why); };
+    const act = (lvl, text) => actions.push({ lvl, text });
+    const line = (group, purpose, meds, text, o) => lines.push({ group, purpose, meds, text, status: (o && o.status) || 'start', alts: (o && o.alts) || [] });
+    const c = ciwaInfo(), w = cowsInfo();
+    const hepatic = f.liver || S.older;
+    const renalAny = f.renal || f.renalSevere;
+    const szRisk = [f.szDisorder || S.review.hxsz ? 'seizure history' : '', f.eating ? 'eating disorder' : '', sub.aud || sub.bzd ? 'alcohol/sedative withdrawal' : ''].filter(Boolean);
+    if (szRisk.length) no('Bupropion', `lowers seizure threshold (${szRisk.join(', ')})`);
+
+    /* 1 ─ Opioid plan: decided first, because it determines whether naltrexone can be used anywhere */
+    const opioid = sub.oud || S.moud !== 'none';
+    const current = S.moud !== 'none';
+    let oplan = null;
+    if (current) oplan = S.moud;
+    else if (sub.oud) oplan = f.prefNoAgonist && !f.pain && !preg ? 'xrntx' : f.bupFail || f.highTol ? 'methadone' : 'bup';
+    const agonist = oplan === 'bup' || oplan === 'methadone';
+    const antagonist = oplan === 'xrntx';
+    if (agonist) no('Naltrexone', `would block the ${oplan === 'bup' ? 'buprenorphine' : 'methadone'} in this plan and precipitate opioid withdrawal`);
+    if (f.pain && !antagonist) no('Naltrexone', 'patient takes opioid analgesics — would precipitate withdrawal and block analgesia');
+    if (preg && sub.oud) no('Naltrexone', 'pregnancy — do not initiate for OUD; agonist MOUD is the standard of care');
+    if (antagonist && f.pain) act('alert', '<b>Opioid analgesics are blocked by naltrexone</b> — coordinate a non-opioid pain plan with the prescriber.');
+
+    if (oplan) {
+      const both = antagonist && sub.aud ? ' <b>Also treats alcohol use disorder</b> — no separate alcohol medication is needed.' : '';
+      if (current) {
+        line('Maintenance', both ? 'Opioid + alcohol use disorder' : 'Opioid use disorder', [{ bup: 'Buprenorphine', methadone: 'Methadone', xrntx: 'Naltrexone' }[oplan]], oplan === 'xrntx'
+          ? `<b>Continue XR-naltrexone</b> monthly injections if effective.${both}`
+          : `<b>Continue current ${oplan === 'bup' ? 'buprenorphine' : 'methadone'}.</b> Verify last dose with the prescriber${oplan === 'methadone' ? ' / OTP (guest dosing if needed)' : ''} and avoid any interruption.${oplan === 'methadone' && f.cardiac ? ' <b>Cardiac:</b> QTc risk — ECG.' : ''}`, { status: 'continue' });
+      } else if (oplan === 'bup') {
+        const low = S.fentanyl || S.methadoneUse, t = w ? w.total : null, hrs = S.hrs.oud;
+        const waitH = S.methadoneUse ? '36–72' : S.fentanyl ? '24–72' : '12–24';
+        let txt, st = 'start';
+        if (low) txt = `<b>Start buprenorphine by low-dose (Bernese/micro) induction.</b> ${S.fentanyl ? 'Fentanyl' : 'Methadone'} exposure raises the risk of precipitated withdrawal with standard induction; low-dose induction overlaps with full agonist and does not require waiting for withdrawal.`;
+        else if (t === null) { st = 'cond'; txt = `<b>Start buprenorphine (standard induction)</b> once objective withdrawal is present (typically COWS ≥8–12) and ~${waitH} h since last use. Score COWS first.`; }
+        else if (t >= 12) txt = `<b>Start buprenorphine — standard induction threshold met</b> (COWS ${t}${hrs ? `, ${hrs} h since last use` : ''}).`;
+        else if (t >= 8) { st = 'cond'; txt = `<b>Buprenorphine — approaching induction threshold</b> (COWS ${t}). Many protocols begin at ≥8; others wait for ≥12. Reassess in 1–2 h.`; }
+        else { st = 'cond'; txt = `<b>Buprenorphine — not yet</b> for standard induction (COWS ${t}). Reassess, or use low-dose induction.`; }
+        if (preg) txt += ' Buprenorphine or methadone are both recommended in pregnancy.';
+        line('Maintenance', 'Opioid use disorder', ['Buprenorphine'], txt, { status: st, alts: [{ med: 'Methadone', text: `if buprenorphine fails or tolerance is very high; requires OTP enrollment${f.cardiac ? '; QTc risk — ECG' : ''}.` }] });
+      } else if (oplan === 'methadone') {
+        const why = [f.bupFail && 'prior buprenorphine failure', f.highTol && 'very high tolerance'].filter(Boolean).join('; ');
+        line('Maintenance', 'Opioid use disorder', ['Methadone'], `<b>Methadone</b> — favored: ${why}. OUD treatment requires OTP enrollment; coordinate discharge linkage early.${f.cardiac ? ' <b>Cardiac:</b> QTc prolongation risk — baseline and follow-up ECG.' : ''}`, { alts: [{ med: 'Buprenorphine', text: 'alternative agonist; low-dose induction if fentanyl/methadone exposure.' }] });
+      } else {
+        line('Maintenance', both ? 'Opioid + alcohol use disorder' : 'Opioid use disorder', ['Naltrexone'], `<b>XR-naltrexone</b> — matches the patient's preference for non-agonist treatment. Requires 7–10 opioid-free days (longer after methadone) and a negative naloxone challenge or confirmation per protocol.${f.liver ? ' Check LFTs.' : ''}${both}`, { status: 'cond', alts: [{ med: 'Buprenorphine', text: 'if the patient cannot complete the opioid-free period.' }] });
+      }
+      if (sub.oud && !(current && agonist)) {
+        line('Withdrawal', 'Opioid withdrawal symptoms', ['Clonidine', 'Ondansetron', 'Loperamide', 'Dicyclomine'], 'As needed: clonidine (hold for low BP/HR), ondansetron, loperamide, dicyclomine, NSAIDs/acetaminophen.', { status: 'prn' });
+        if (!w) act('alert', '<b>Score COWS</b> (Step 3) to guide induction timing and symptom management.');
+      }
+      if (sub.oud && w) { const b = cowsBand(w.total); act(b[1] === 'ok' ? 'go' : b[1] === 'warn' ? 'caution' : 'avoid', `<b>COWS ${w.total} — ${b[0].toLowerCase()}${w.done < w.n ? ` (partial — ${w.done}/${w.n} items)` : ''}.</b>${w.total > 24 ? ' Notify prescriber; assess hydration and level of care.' : ''}`); }
+      line('Safety & nutrition', 'Overdose prevention', ['Naloxone'], '<b>Naloxone kit</b> at discharge (and for family). Counsel on loss of tolerance after a residential stay.');
+      if (sub.aud || sub.bzd) act('caution', '<b>Opioids with alcohol/sedatives:</b> heightened respiratory-depression risk. Do not withhold MOUD for this reason — monitor closely.');
+      if (preg) act('alert', '<b>Pregnancy:</b> MOUD is the standard of care; avoid medically supervised withdrawal without MOUD. Coordinate with OB.');
     }
-    if (S.review.hxsz) wd.push({ lvl: 'caution', text: '<b>Seizure/DT history:</b> high risk for complicated withdrawal — prescriber may prefer scheduled or front-loaded dosing rather than symptom-triggered alone.' });
-    if (f.liver || S.older) wd.push({ lvl: 'caution', text: `<b>${f.liver ? 'Liver disease' : 'Age ≥65'}:</b> favor a benzodiazepine without active metabolites (lorazepam) over long-acting agents (diazepam, chlordiazepoxide), which can accumulate.`, meds: ['Lorazepam'] });
-    else wd.push({ lvl: 'go', text: 'Long-acting benzodiazepine (diazepam) gives a smoother self-tapering course when hepatic function is normal.', meds: ['Diazepam'] });
-    if (S.subs.bzd) wd.push({ lvl: 'caution', text: '<b>Concurrent benzodiazepine use:</b> cross-tolerance — manage with a single benzodiazepine regimen under one prescriber plan.' });
-    wd.push({ lvl: 'info', text: 'Phenobarbital is a prescriber option for benzodiazepine-resistant withdrawal, typically in more closely monitored settings.', meds: ['Phenobarbital'] });
-    wd.push({ lvl: 'go', text: '<b>Thiamine for every patient, before any glucose.</b> Add folate and a multivitamin. Watch for Wernicke signs (confusion, ataxia, eye-movement abnormalities).', meds: ['Thiamine', 'Folate'] });
-    wd.push({ lvl: 'info', text: 'Gabapentin may help as an adjunct for mild withdrawal, sleep and anxiety.', meds: ['Gabapentin'] });
-    out.push({ title: 'Withdrawal management', items: wd });
 
-    const rp = [];
-    const opioidExposure = S.subs.oud || S.moud !== 'none' || f.pain;
-    if (opioidExposure) rp.push({ lvl: 'avoid', text: `<b>Naltrexone — avoid:</b> ${S.moud !== 'none' ? 'patient is on opioid agonist treatment' : f.pain ? 'patient takes opioid analgesics' : 'recent opioid use'}; it would precipitate opioid withdrawal and block analgesia.`, meds: ['Naltrexone'] });
-    else if (f.liver) rp.push({ lvl: 'caution', text: '<b>Naltrexone — caution:</b> check LFTs; avoid in acute hepatitis or liver failure.', meds: ['Naltrexone'] });
-    else rp.push({ lvl: 'go', text: '<b>Naltrexone — first-line.</b> Reduces heavy drinking and craving. Oral or monthly injectable.', meds: ['Naltrexone'] });
-
-    if (f.renalSevere) rp.push({ lvl: 'avoid', text: '<b>Acamprosate — avoid:</b> contraindicated with CrCl <30.', meds: ['Acamprosate'] });
-    else if (f.renal) rp.push({ lvl: 'caution', text: '<b>Acamprosate — dose-adjust</b> for CrCl 30–50.', meds: ['Acamprosate'] });
-    else rp.push({ lvl: 'go', text: `<b>Acamprosate — first-line</b>${f.liver || opioidExposure ? ' and a good choice here (no hepatic metabolism, no opioid interaction)' : ''}. Best for maintaining abstinence once achieved.`, meds: ['Acamprosate'] });
-
-    const dsfBad = [];
-    if (f.cardiac) dsfBad.push('cardiac disease');
-    if (f.psychoticD || S.emerg.psychosis) dsfBad.push('psychosis');
-    if (S.preg === 'yes') dsfBad.push('pregnancy');
-    if (f.liver) dsfBad.push('liver disease');
-    if (dsfBad.length) rp.push({ lvl: 'avoid', text: `<b>Disulfiram — avoid:</b> ${dsfBad.join(', ')}.`, meds: ['Disulfiram'] });
-    else rp.push({ lvl: 'caution', text: '<b>Disulfiram — selected patients only:</b> requires commitment to abstinence and supervised dosing; never give while intoxicated.', meds: ['Disulfiram'] });
-
-    const topBad = [];
-    if (S.preg === 'yes') topBad.push('pregnancy (teratogenic)');
-    if (f.stones) topBad.push('kidney stones');
-    if (topBad.length) rp.push({ lvl: 'avoid', text: `<b>Topiramate — avoid:</b> ${topBad.join(', ')}.`, meds: ['Topiramate'] });
-    else rp.push({ lvl: 'info', text: '<b>Topiramate (off-label):</b> evidence for reducing heavy drinking; slow titration, watch for cognitive slowing and paresthesias.', meds: ['Topiramate'] });
-    rp.push({ lvl: S.subs.oud ? 'caution' : 'info', text: `<b>Gabapentin (off-label):</b> ${S.subs.oud ? 'misuse risk with concurrent opioid use — monitor closely. ' : ''}${f.renal || f.renalSevere ? 'Renal dose adjustment required. ' : ''}Helps with sleep and protracted withdrawal symptoms.`, meds: ['Gabapentin'] });
-    out.push({ title: 'Relapse prevention options', items: rp });
-    return out;
-  }
-
-  function rulesOUD() {
-    const f = S.f, out = [], wd = [], moud = [];
-    const c = cowsInfo();
-    const hrs = S.hrs.oud;
-    if (S.moud === 'bup' || S.moud === 'methadone') {
-      moud.push({ lvl: 'go', text: `<b>Continue current ${S.moud === 'bup' ? 'buprenorphine' : 'methadone'}.</b> Verify last dose with the prescriber${S.moud === 'methadone' ? ' / OTP (guest dosing if needed)' : ''} and avoid any interruption.`, meds: [S.moud === 'bup' ? 'Buprenorphine' : 'Methadone'] });
+    /* 2 ─ One benzodiazepine regimen covers alcohol withdrawal and any sedative taper */
+    if (sub.aud || sub.bzd) {
+      const agent = hepatic ? 'Lorazepam' : 'Diazepam';
+      const why = hepatic ? ` Lorazepam chosen (${f.liver ? 'liver disease' : 'age ≥65'}): no active metabolites, while long-acting agents can accumulate — monitor sedation and falls.` : ' Diazepam (long-acting) gives a smoother, self-tapering course.';
+      const ciwaTxt = !c ? 'score CIWA-Ar to guide dosing' : c.total < 10 ? `CIWA-Ar ${c.total} — minimal: medication generally not indicated unless high-risk history; reassess per protocol` : c.total < 19 ? `CIWA-Ar ${c.total} — mild–moderate: symptom-triggered dosing per facility protocol, reassess after each dose` : `CIWA-Ar ${c.total} — severe: notify prescriber now`;
+      const taper = 'reduce by 10% of the current dose at each change, every 2–4 weeks; hold or extend the interval if withdrawal emerges. Never stop abruptly.';
+      const hx = S.review.hxsz ? ' <b>Seizure/DT history:</b> prescriber may prefer scheduled or front-loaded dosing.' : '';
+      let purpose, txt, st = 'start';
+      if (sub.aud && sub.bzd) { purpose = 'Alcohol withdrawal + benzodiazepine taper'; txt = `<b>One ${agent.toLowerCase()} regimen for both.</b> Treat alcohol withdrawal first (${ciwaTxt}), then continue the same agent as a supervised taper: ${taper}`; }
+      else if (sub.aud) { purpose = 'Alcohol withdrawal'; txt = `<b>${agent}</b> — ${ciwaTxt}.`; if (!c || c.total < 10) st = 'cond'; }
+      else { purpose = 'Benzodiazepine taper'; txt = `<b>Convert to ${agent.toLowerCase()}</b> using an equivalence table (e.g., Ashton), verified by the prescriber. Goal: ${taper}`; }
+      const alts = [];
+      if (sub.bzd && !hepatic) alts.push({ med: 'Clonazepam', text: 'alternative taper agent.' });
+      if (sub.aud) alts.push({ med: 'Phenobarbital', text: 'for benzodiazepine-resistant withdrawal, typically in more closely monitored settings.' });
+      if (sub.bzd) ['Carbamazepine', 'Valproate'].forEach((m) => alts.push({ med: m, text: 'taper adjunct per prescriber.' }));
+      if (sub.bzd) alts.push({ med: 'Propranolol', text: 'for somatic symptoms during the taper.' });
+      line('Withdrawal', purpose, [agent], txt + why + hx, { status: st, alts });
+      if (sub.aud && !c) act('alert', '<b>Score CIWA-Ar</b> (Step 3) to guide withdrawal management.');
+      if (c && sub.aud && c.total >= 19) act('avoid', `<b>CIWA-Ar ${c.total} — severe alcohol withdrawal:</b> notify prescriber now; evaluate need for a higher level of care.`);
     }
-    if (!c) wd.push({ lvl: 'alert', text: '<b>Score COWS</b> (Step 3) to guide induction timing and symptom management.' });
-    else {
-      const t = c.total, b = cowsBand(t), partial = c.done < c.n ? ` (partial — ${c.done}/${c.n} items)` : '';
-      wd.push({ lvl: b[1] === 'ok' ? 'go' : b[1] === 'warn' ? 'caution' : 'avoid', text: `<b>COWS ${t} — ${b[0].toLowerCase()}${partial}.</b>${t > 24 ? ' Notify prescriber; assess hydration and level of care.' : ''}` });
+    if (sub.aud) line('Safety & nutrition', 'Wernicke prevention', ['Thiamine', 'Folate'], '<b>Thiamine for every patient, before any glucose.</b> Add folate and a multivitamin. Watch for confusion, ataxia and eye-movement abnormalities.');
+    if (sub.stim || sub.bzd || f.anxiety || f.insomnia) no('Benzodiazepines / Z-drugs for sleep or anxiety', 'dependence risk — use the non-benzodiazepine options in this plan' + (sub.aud || sub.bzd ? ' (the withdrawal/taper regimen above is the only benzodiazepine)' : ''));
+
+    /* 3 ─ Valproate and topiramate exclusions apply wherever they could appear */
+    if (f.liver || preg) no('Valproate', [f.liver && 'liver disease', preg && 'pregnancy'].filter(Boolean).join(', '));
+    const topBad = [preg && 'pregnancy (teratogenic)', f.stones && 'kidney stones'].filter(Boolean);
+    if (topBad.length && sub.aud) no('Topiramate', topBad.join(', '));
+
+    /* 4 ─ Alcohol relapse prevention — one primary medication */
+    if (sub.aud && !antagonist) {
+      if (f.renalSevere) no('Acamprosate', 'contraindicated with CrCl <30');
+      const dsfBad = [f.cardiac && 'cardiac disease', f.psychoticD && 'psychotic disorder', preg && 'pregnancy', f.liver && 'liver disease'].filter(Boolean);
+      if (dsfBad.length) no('Disulfiram', dsfBad.join(', '));
+      const ntxOk = !avoid.has('Naltrexone'), acaOk = !f.renalSevere;
+      const acaTxt = `<b>Acamprosate</b> — best for maintaining abstinence once achieved${f.renal ? '; <b>dose-adjust</b> for CrCl 30–50' : ''}${f.liver || agonist || f.pain ? '; no hepatic metabolism and no opioid interaction' : ''}.`;
+      const ntxTxt = `<b>Naltrexone</b> — first-line; reduces heavy drinking and craving. Oral or monthly injectable${f.liver ? '. Liver disease: check LFTs; avoid in acute hepatitis or liver failure' : ''}.`;
+      const alts = [];
+      let primary = null, txt = '', st = 'start';
+      if (ntxOk && !f.liver) { primary = 'Naltrexone'; txt = ntxTxt; if (acaOk) alts.push({ med: 'Acamprosate', text: `if naltrexone is not tolerated${f.renal ? '; dose-adjust for CrCl 30–50' : ''}.` }); }
+      else if (acaOk) { primary = 'Acamprosate'; txt = acaTxt; if (ntxOk) alts.push({ med: 'Naltrexone', text: 'check LFTs first; avoid in acute hepatitis or liver failure.' }); }
+      else if (ntxOk) { primary = 'Naltrexone'; txt = ntxTxt; }
+      if (!topBad.length) alts.push({ med: 'Topiramate', text: 'off-label; slow titration, watch for cognitive slowing and paresthesias.' });
+      if (!dsfBad.length) alts.push({ med: 'Disulfiram', text: 'selected patients only — requires commitment to abstinence and supervised dosing; never give while intoxicated.' });
+      if (!primary) { const a = alts.shift(); primary = a ? a.med : null; st = 'cond'; txt = 'Naltrexone and acamprosate are both excluded (see Avoid).' + (a ? ` <b>${a.med}</b> — ${a.text}` : ' Psychosocial treatment; discuss options with the prescriber.'); }
+      line('Maintenance', 'Alcohol use disorder', primary ? [primary] : [], txt, { status: st, alts });
     }
-    wd.push({ lvl: 'info', text: 'Symptomatic relief: clonidine (hold for low BP/HR), ondansetron, loperamide, dicyclomine, NSAIDs/acetaminophen, hydroxyzine.', meds: ['Clonidine', 'Ondansetron', 'Loperamide', 'Dicyclomine', 'Hydroxyzine'] });
-    if (S.moud === 'none' || S.moud === 'xrntx') {
-      // Buprenorphine induction
-      if (S.moud === 'xrntx') moud.push({ lvl: 'info', text: '<b>On XR-naltrexone:</b> continue monthly injections if effective; agonist induction would need prescriber planning around the blockade.', meds: ['Naltrexone'] });
-      else {
-        const lowDose = S.fentanyl || S.methadoneUse;
-        const t = c ? c.total : null;
-        const waitH = S.methadoneUse ? '36–72' : S.fentanyl ? '24–72 (variable with fentanyl)' : '12–24';
-        if (lowDose) moud.push({ lvl: 'go', text: `<b>Buprenorphine — consider low-dose (Bernese/micro) induction.</b> ${S.fentanyl ? 'Fentanyl' : 'Methadone'} exposure raises the risk of precipitated withdrawal with standard induction; low-dose induction overlaps with full agonist and does not require waiting for withdrawal.`, meds: ['Buprenorphine'] });
-        if (t === null) moud.push({ lvl: 'caution', text: `<b>Buprenorphine — standard induction</b> requires objective withdrawal (typically COWS ≥8–12) and ~${waitH} h since last use. Score COWS first.`, meds: ['Buprenorphine'] });
-        else if (t >= 12) moud.push({ lvl: lowDose ? 'caution' : 'go', text: `<b>Buprenorphine — standard induction threshold met</b> (COWS ${t})${hrs ? `, ${hrs} h since last use` : ''}.${lowDose ? ' With fentanyl/methadone, prescriber may still prefer low-dose induction.' : ''}`, meds: ['Buprenorphine'] });
-        else if (t >= 8) moud.push({ lvl: 'caution', text: `<b>Buprenorphine — approaching threshold</b> (COWS ${t}). Many protocols begin at ≥8; others wait for ≥12. Reassess in 1–2 h.`, meds: ['Buprenorphine'] });
-        else moud.push({ lvl: 'caution', text: `<b>Buprenorphine — not yet</b> for standard induction (COWS ${t}). Reassess, or use low-dose induction.`, meds: ['Buprenorphine'] });
 
-        // Methadone
-        const mReasons = [];
-        if (f.bupFail) mReasons.push('prior buprenorphine failure');
-        if (f.highTol) mReasons.push('very high tolerance');
-        if (S.preg === 'yes') mReasons.push('pregnancy (methadone or buprenorphine both recommended)');
-        if (f.cardiac) moud.push({ lvl: 'caution', text: '<b>Methadone — caution:</b> QTc prolongation risk; baseline and follow-up ECG. Dispensed only through an OTP for OUD.', meds: ['Methadone'] });
-        else moud.push({ lvl: mReasons.length ? 'go' : 'info', text: `<b>Methadone${mReasons.length ? ' — favored' : ''}:</b> ${mReasons.length ? mReasons.join('; ') + '. ' : ''}OUD treatment requires OTP enrollment; coordinate discharge linkage early.`, meds: ['Methadone'] });
-
-        // XR-naltrexone
-        const nBad = [];
-        if (S.preg === 'yes') nBad.push('pregnancy — do not initiate');
-        if (f.pain) nBad.push('needs opioid analgesia');
-        if (nBad.length) moud.push({ lvl: 'avoid', text: `<b>XR-naltrexone — avoid:</b> ${nBad.join('; ')}.`, meds: ['Naltrexone'] });
-        else moud.push({ lvl: f.prefNoAgonist ? 'go' : 'info', text: `<b>XR-naltrexone${f.prefNoAgonist ? ' — matches patient preference' : ''}:</b> requires 7–10 opioid-free days (longer after methadone) and a negative naloxone challenge or confirmation per protocol.${f.liver ? ' Check LFTs.' : ''}`, meds: ['Naltrexone'] });
+    /* 5 ─ Stimulants */
+    if (sub.stim) {
+      act('info', '<b>Stimulants: no FDA-approved medication.</b> Contingency management has the strongest evidence; add CBT and community reinforcement. Mirtazapine (methamphetamine) and topiramate/modafinil (cocaine) have limited, mixed evidence.');
+      act('caution', '<b>Stimulant crash (days 1–10):</b> hypersomnia, hyperphagia, dysphoria — screen for suicidal ideation daily.');
+      if (f.cardiac) act('alert', '<b>Cardiac disease with stimulant use:</b> ECG and medical follow-up.');
+      if (!avoid.has('Bupropion')) {
+        const ntxInPlan = lines.some((l) => l.meds.includes('Naltrexone'));
+        if (ntxInPlan) line('Maintenance', 'Stimulant use (off-label)', ['Bupropion'], '<b>Bupropion</b>, combined with the naltrexone already in this plan — the combination has trial evidence for methamphetamine use.', { status: 'cond' });
+        else if (!avoid.has('Naltrexone')) line('Maintenance', 'Stimulant use (off-label)', ['Bupropion', 'Naltrexone'], `<b>Bupropion + injectable naltrexone</b> — the combination has trial evidence for methamphetamine use.${f.liver ? ' Check LFTs.' : ''}`, { status: 'cond' });
+        else line('Maintenance', 'Stimulant use (off-label)', ['Bupropion'], '<b>Bupropion alone</b> may be considered; the naltrexone combination is not possible with this opioid plan.', { status: 'cond' });
       }
     }
-    if (S.preg === 'yes') moud.push({ lvl: 'alert', text: '<b>Pregnancy:</b> MOUD (buprenorphine or methadone) is the standard of care; avoid medically supervised withdrawal without MOUD. Coordinate with OB.' });
-    if (S.subs.bzd || S.subs.aud) moud.push({ lvl: 'caution', text: '<b>Concurrent alcohol/sedative use:</b> heightened respiratory-depression risk. Do not withhold MOUD for this reason — monitor and coordinate the plan.' });
-    moud.push({ lvl: 'go', text: '<b>Naloxone for every patient at discharge</b> (and family). Counsel on loss of tolerance after residential stay.', meds: ['Naloxone'] });
-    out.push({ title: 'Withdrawal assessment', items: wd });
-    out.push({ title: 'Medications for OUD', items: moud });
-    return out;
-  }
 
-  function rulesSTIM() {
-    const f = S.f, items = [], rp = [];
-    items.push({ lvl: 'info', text: '<b>No FDA-approved medication.</b> Treatment is primarily psychosocial; contingency management has the strongest evidence. Add CBT and community reinforcement.' });
-    items.push({ lvl: 'caution', text: '<b>Crash phase (days 1–10):</b> hypersomnia, hyperphagia, dysphoria. Screen for suicidal ideation daily — risk peaks early.' });
-    if (f.psychoticD || S.emerg.psychosis) items.push({ lvl: 'caution', text: '<b>Psychosis:</b> short-term antipsychotic per prescriber; reassess need once abstinent.', meds: ['Risperidone', 'Quetiapine'] });
-    items.push({ lvl: 'info', text: 'Avoid routine benzodiazepines; for sleep/anxiety use trazodone, hydroxyzine or mirtazapine.', meds: ['Trazodone', 'Hydroxyzine', 'Mirtazapine'] });
-    const bupBad = f.szDisorder || S.review.hxsz || f.eating || S.subs.aud || S.subs.bzd;
-    const ntxBad = S.subs.oud || S.moud !== 'none' || f.pain;
-    if (bupBad) rp.push({ lvl: 'avoid', text: `<b>Bupropion — avoid/caution:</b> lowers seizure threshold (${[f.szDisorder || S.review.hxsz ? 'seizure history' : '', f.eating ? 'eating disorder' : '', S.subs.aud || S.subs.bzd ? 'alcohol/sedative withdrawal' : ''].filter(Boolean).join(', ')}).`, meds: ['Bupropion'] });
-    if (!bupBad && !ntxBad) rp.push({ lvl: 'go', text: '<b>Methamphetamine (off-label):</b> bupropion + injectable naltrexone combination has trial evidence.', meds: ['Bupropion', 'Naltrexone'] });
-    else if (ntxBad && !bupBad) rp.push({ lvl: 'caution', text: '<b>Bupropion alone (off-label)</b> may be considered; naltrexone combination not possible with opioid exposure.', meds: ['Bupropion'] });
-    rp.push({ lvl: 'info', text: 'Mirtazapine (methamphetamine) and topiramate/modafinil (cocaine) have limited, mixed evidence.', meds: ['Mirtazapine', 'Topiramate'] });
-    if (f.cardiac) rp.push({ lvl: 'alert', text: '<b>Cardiac disease:</b> stimulant-related cardiomyopathy/arrhythmia risk — ECG and medical follow-up.' });
-    return [{ title: 'Withdrawal & stabilization', items }, { title: 'Pharmacotherapy (off-label)', items: rp }];
-  }
-
-  function rulesBZD() {
-    const f = S.f, items = [];
-    items.push({ lvl: 'avoid', text: '<b>Never stop abruptly</b> — seizure and delirium risk.' });
-    items.push({ lvl: 'go', text: '<b>Medically supervised taper:</b> convert to <b>diazepam (first-line)</b> or clonazepam using an equivalence table (e.g., Ashton), verified by the prescriber. <b>Goal: reduce by 10% of the current dose at each change, every 2–4 weeks.</b> Hold or extend the interval if withdrawal symptoms emerge.', meds: ['Diazepam', 'Clonazepam'] });
-    if (f.liver || S.older) items.push({ lvl: 'caution', text: `<b>${f.liver ? 'Liver disease' : 'Age ≥65'}:</b> long-acting agents may accumulate — prescriber may choose lorazepam; monitor sedation and falls.`, meds: ['Lorazepam'] });
-    if (S.subs.aud) items.push({ lvl: 'caution', text: '<b>With alcohol:</b> use one combined benzodiazepine plan; monitor with CIWA-Ar.' });
-    if (S.subs.oud || S.moud !== 'none') items.push({ lvl: 'caution', text: '<b>With opioids/MOUD:</b> additive respiratory depression — naloxone on hand, close monitoring.', meds: ['Naloxone'] });
-    items.push({ lvl: 'info', text: 'Taper adjuncts per prescriber: carbamazepine, valproate, gabapentin; propranolol for somatic symptoms.', meds: ['Carbamazepine', 'Valproate', 'Gabapentin'] });
-    items.push({ lvl: 'info', text: '<b>Treat the underlying anxiety without another benzodiazepine:</b> SSRIs/SNRIs, buspirone, hydroxyzine; trazodone or melatonin for sleep. Expect protracted withdrawal (PAWS) for weeks to months.', meds: ['Sertraline', 'Venlafaxine', 'Buspirone', 'Hydroxyzine', 'Trazodone'] });
-    return [{ title: 'Taper plan', items }];
-  }
-
-  function rulesCAN() {
-    const f = S.f, items = [];
-    items.push({ lvl: 'info', text: '<b>Withdrawal:</b> irritability, insomnia, reduced appetite, cravings — begins in 1–2 days, peaks days 2–6, mostly resolves in 1–2 weeks. Supportive care.' });
-    items.push({ lvl: 'info', text: 'Off-label symptom relief: gabapentin, mirtazapine (sleep/appetite), hydroxyzine, trazodone. N-acetylcysteine has some evidence in adolescents and young adults.', meds: ['Gabapentin', 'Mirtazapine', 'Hydroxyzine', 'Trazodone'] });
-    items.push({ lvl: 'go', text: '<b>Psychosocial core:</b> MET, CBT, contingency management, mindfulness-based relapse prevention.' });
-    items.push({ lvl: 'caution', text: '<b>Cannabinoid hyperemesis syndrome</b> (cyclic vomiting relieved by hot showers): topical capsaicin; haloperidol/droperidol in ED settings; abstinence is the definitive treatment.', meds: ['Capsaicin'] });
-    if (f.psychoticD || S.emerg.psychosis) items.push({ lvl: 'caution', text: '<b>Psychosis:</b> cannabis worsens course — antipsychotic per prescriber and strong abstinence focus.', meds: ['Aripiprazole', 'Risperidone'] });
-    return [{ title: 'Management', items }];
-  }
-
-  function rulesCooccurring() {
-    const f = S.f, items = [];
-    const preg = S.preg === 'yes';
-    if (f.depression) {
-      const bupOk = !(f.szDisorder || S.review.hxsz || f.eating || S.subs.aud || S.subs.bzd);
-      items.push({ lvl: 'go', text: `<b>Depression:</b> SSRI (sertraline) first-line; reassess after 2–4 weeks of abstinence since substance-induced symptoms often improve.${bupOk ? ' Bupropion is an option (also helps stimulant/nicotine use).' : ' Avoid bupropion (seizure risk factors present).'}`, meds: bupOk ? ['Sertraline', 'Bupropion', 'Mirtazapine'] : ['Sertraline', 'Mirtazapine'] });
+    /* 6 ─ Cannabis */
+    if (sub.can) {
+      act('info', '<b>Cannabis withdrawal:</b> irritability, insomnia, reduced appetite, cravings — peaks days 2–6, mostly resolves in 1–2 weeks. Psychosocial core: MET, CBT, contingency management.');
+      line('Symptom relief', 'Cannabinoid hyperemesis (if cyclic vomiting)', ['Capsaicin'], 'Topical capsaicin; haloperidol/droperidol in ED settings. Abstinence is the definitive treatment.', { status: 'prn' });
     }
-    if (f.anxiety) items.push({ lvl: 'go', text: '<b>Anxiety:</b> SSRI/SNRI, buspirone, hydroxyzine. Avoid benzodiazepines.', meds: ['Sertraline', 'Venlafaxine', 'Buspirone', 'Hydroxyzine'] });
-    if (f.ptsd) items.push({ lvl: 'go', text: '<b>PTSD:</b> sertraline; prazosin for nightmares (check orthostatic BP). Trauma-focused therapy when stable.', meds: ['Sertraline', 'Prazosin'] });
-    if (f.bipolar) {
-      const opts = [];
-      opts.push(f.renal || f.renalSevere ? 'lithium needs renal caution' : 'lithium');
-      opts.push(f.liver || preg ? 'avoid valproate (' + [f.liver && 'liver', preg && 'pregnancy'].filter(Boolean).join(', ') + ')' : 'valproate');
-      items.push({ lvl: 'caution', text: `<b>Bipolar disorder:</b> mood stabilizer per psychiatry — ${opts.join('; ')}. Antidepressant monotherapy risks switching.`, meds: ['Lithium', 'Valproate', 'Lamotrigine', 'Quetiapine'] });
-    }
-    if (f.psychoticD) items.push({ lvl: 'caution', text: `<b>Psychotic disorder:</b> continue/optimize antipsychotic.${f.cardiac ? ' Check QTc.' : ''}`, meds: ['Aripiprazole', 'Risperidone', 'Olanzapine'] });
-    if (f.insomnia) items.push({ lvl: 'go', text: '<b>Insomnia:</b> sleep hygiene/CBT-I first; trazodone, hydroxyzine or mirtazapine. Avoid benzodiazepines and Z-drugs.', meds: ['Trazodone', 'Hydroxyzine', 'Mirtazapine'] });
-    if (f.adhd) items.push({ lvl: 'caution', text: '<b>ADHD:</b> prefer non-stimulant options or long-acting formulations with monitoring; especially cautious with stimulant use disorder.', meds: ['Bupropion'] });
-    if (f.pain) items.push({ lvl: 'caution', text: '<b>Chronic pain on opioids:</b> coordinate with the prescriber; duloxetine and non-opioid strategies; buprenorphine can address both pain and OUD.', meds: ['Duloxetine', 'Buprenorphine'] });
-    return items;
-  }
 
-  const RULES = { aud: rulesAUD, oud: rulesOUD, stim: rulesSTIM, bzd: rulesBZD, can: rulesCAN };
+    /* 7 ─ Co-occurring conditions — one medication per need */
+    if (f.psychoticD) line('Co-occurring', 'Psychotic disorder', ['Aripiprazole', 'Risperidone'], `<b>Continue or optimize the antipsychotic.</b>${sub.can ? ' Cannabis worsens the course — strong abstinence focus.' : ''}${f.cardiac ? ' Check QTc.' : ''}`);
+    const ssriFor = [f.depression && 'depression', f.anxiety && 'anxiety', f.ptsd && 'PTSD'].filter(Boolean);
+    if (ssriFor.length) {
+      const alts = [];
+      if (f.anxiety) alts.push({ med: 'Venlafaxine', text: 'SNRI alternative for anxiety.' });
+      if (f.depression) alts.push({ med: 'Bupropion', text: 'alternative for depression (also helps stimulant/nicotine use).' });
+      if (f.depression) alts.push({ med: 'Mirtazapine', text: 'alternative for depression; also helps sleep and appetite.' });
+      const label = ssriFor.join(' / ');
+      line('Co-occurring', label.charAt(0).toUpperCase() + label.slice(1), ['Sertraline'], `<b>Sertraline</b> (SSRI) first-line${ssriFor.length > 1 ? ` — one medication covers ${ssriFor.join(' and ')}` : ''}.${f.depression ? ' Reassess after 2–4 weeks of abstinence; substance-induced symptoms often improve.' : ''}${f.ptsd ? ' Trauma-focused therapy when stable.' : ''}${f.bipolar ? ' <b>Bipolar disorder:</b> only alongside a mood stabilizer — antidepressant monotherapy risks switching.' : ''}`, { status: f.bipolar ? 'cond' : 'start', alts });
+    }
+    if (f.ptsd) line('Co-occurring', 'PTSD nightmares', ['Prazosin'], '<b>Prazosin</b> at bedtime; check orthostatic BP.');
+    if (f.bipolar) line('Co-occurring', 'Bipolar disorder', ['Lithium', 'Valproate', 'Lamotrigine', 'Quetiapine'], `<b>One mood stabilizer, chosen by psychiatry.</b>${renalAny ? ' Lithium needs renal caution.' : ''}`, { status: 'cond' });
+    if (f.adhd) {
+      if (!avoid.has('Bupropion')) line('Co-occurring', 'ADHD', ['Bupropion'], `<b>Prefer non-stimulant options</b> or long-acting formulations with monitoring${sub.stim ? '; especially cautious with stimulant use disorder' : ''}.`, { status: 'cond' });
+      else act('caution', '<b>ADHD:</b> prefer non-stimulant options or long-acting formulations with monitoring (bupropion excluded — see Avoid).');
+    }
+    if (f.pain) line('Co-occurring', 'Chronic pain', ['Duloxetine'], `<b>Duloxetine</b> and non-opioid strategies; coordinate with the opioid prescriber.${oplan === 'bup' ? ' The buprenorphine in this plan can address both pain and OUD.' : ''}`, { status: 'cond' });
+
+    /* 8 ─ Symptom relief shared across substances */
+    if (f.anxiety || sub.bzd || sub.stim || sub.can || sub.oud) line('Symptom relief', 'Anxiety / restlessness', ['Hydroxyzine'], '<b>Hydroxyzine</b> as needed — not habit-forming.', { status: 'prn', alts: f.anxiety || sub.bzd ? [{ med: 'Buspirone', text: 'scheduled option for ongoing anxiety.' }] : [] });
+    if (f.insomnia || sub.stim || sub.can || sub.bzd) line('Symptom relief', 'Sleep', ['Trazodone'], `${f.insomnia ? 'Sleep hygiene / CBT-I first; then ' : ''}<b>trazodone</b> at bedtime as needed.`, { status: 'prn', alts: [{ med: 'Mirtazapine', text: 'if appetite is also low.' }].concat(sub.bzd ? [{ med: 'Melatonin', text: 'mild option.' }] : []) });
+    if (sub.aud || sub.can || sub.bzd) line('Symptom relief', 'Withdrawal symptoms, sleep, anxiety (off-label)', ['Gabapentin'], `<b>Gabapentin</b> adjunct.${opioid ? ' <b>Misuse risk with opioid use</b> — monitor closely.' : ''}${renalAny ? ' Renal dose adjustment required.' : ''}`, { status: opioid || renalAny ? 'cond' : 'prn' });
+
+    /* Consistency pass: an avoided drug never appears in the plan; each drug is listed once. */
+    const placed = new Set(), altSeen = new Set();
+    lines.forEach((l) => { l.meds = l.meds.filter((m) => !avoid.has(m) && !placed.has(m)); l.meds.forEach((m) => placed.add(m)); });
+    lines.forEach((l) => { l.alts = l.alts.filter((a) => { const ok = !avoid.has(a.med) && !placed.has(a.med) && !altSeen.has(a.med); altSeen.add(a.med); return ok; }); });
+    lines.sort((a, b) => GROUPS.indexOf(a.group) - GROUPS.indexOf(b.group));
+    return { lines, avoid, actions };
+  }
 
   function acuity() {
     const reasons = [];
@@ -415,49 +414,24 @@
     return parts.join('');
   }
 
-  /* ── Treatment plan ──
-     Built from the same rule set: every rule item that names medications is
-     regrouped by medication. A medication's tier is the most restrictive that
-     applies (any "avoid" wins), otherwise its strongest recommendation.
-     Every rule text that mentions it is kept as its rationale. */
-  const TIERS = [
-    { id: 'go', title: 'Recommended', hint: 'Suggested for this patient based on the answers given.', color: '#81c995' },
-    { id: 'caution', title: 'Conditional — prescriber decision', hint: 'Appropriate only if the conditions in the notes are met.', color: 'var(--warn)' },
-    { id: 'info', title: 'Also consider', hint: 'Options or adjuncts depending on symptoms and preference.', color: 'var(--accent)' },
-    { id: 'avoid', title: 'Avoid', hint: 'Contraindicated or not advised for this patient.', color: '#ef5350' }
-  ];
-  const RANK = { avoid: 4, go: 3, caution: 2, alert: 2, info: 1 };
+  /* ── Treatment plan view ── */
+  const STATUS = { start: ['Start', '#81c995'], continue: ['Continue', '#81c995'], cond: ['Prescriber decision', 'var(--warn)'], prn: ['As needed', 'var(--accent)'] };
   const strip = (h) => h.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-  const lead = (h) => { const m = /<b>([^<]+)<\/b>/.exec(h); return m ? m[1].replace(/[:.]\s*$/, '').trim() : ''; };
 
-  function buildPlan() {
-    const meds = new Map(), actions = [];
-    const add = (it, context, col) => {
-      if (!it.meds || !it.meds.length) { actions.push({ it, context, col }); return; }
-      it.meds.forEach((m) => {
-        let r = meds.get(m);
-        if (!r) { r = { name: m, col, rank: 0, lvl: 'info', contexts: [], notes: [] }; meds.set(m, r); }
-        const lvl = it.lvl === 'alert' ? 'caution' : it.lvl;
-        if (RANK[lvl] > r.rank) { r.rank = RANK[lvl]; r.lvl = lvl; }
-        if (!r.contexts.includes(context)) r.contexts.push(context);
-        if (!r.notes.includes(it.text)) r.notes.push(it.text);
-      });
-    };
-    chosen().forEach((s) => RULES[s.id]().forEach((sec) => sec.items.forEach((it) => add(it, `${s.label} · ${sec.title}`, COL[s.id]))));
-    rulesCooccurring().forEach((it) => add(it, lead(it.text) || 'Co-occurring condition', '#ce93d8'));
-    const tiers = {};
-    TIERS.forEach((t) => { tiers[t.id] = []; });
-    meds.forEach((r) => tiers[r.lvl].push(r));
-    return { tiers, actions };
+  function medChip(m, bad) {
+    const c = bad ? '#ef5350' : 'var(--accent)';
+    const st = `background:color-mix(in srgb,${c} 12%,transparent);color:${c};border-color:color-mix(in srgb,${c} 35%,transparent)`;
+    return knownMeds().includes(m.toLowerCase())
+      ? `<button class="pw-med wf-medlink" data-med="${esc(m)}" style="${st}" title="Open in Medication Reference">${esc(m)} ↗</button>`
+      : `<span class="pw-med" style="${st}">${esc(m)}</span>`;
   }
 
-  function medRow(r) {
-    const known = knownMeds().includes(r.name.toLowerCase());
-    const name = known
-      ? `<button class="pw-med wf-medlink" data-med="${esc(r.name)}" style="background:${r.col}1f;color:${r.col};border-color:${r.col}55" title="Open in Medication Reference">${esc(r.name)} ↗</button>`
-      : `<span class="pw-med" style="background:var(--tag-bg);color:var(--text)">${esc(r.name)}</span>`;
-    return `<div class="wf-plan-row"><div class="wf-plan-top">${name}<span class="wf-plan-for">${esc(r.contexts.join('; '))}</span></div>
-      <details class="wf-plan-why"><summary>Why</summary><ul>${r.notes.map((n) => `<li>${n}</li>`).join('')}</ul></details></div>`;
+  function planRow(l) {
+    const [lab, col] = STATUS[l.status];
+    return `<div class="wf-pl"><div class="wf-pl-head"><span class="wf-pl-purpose">${esc(l.purpose)}</span><span class="wf-badge" style="color:${col};border-color:${col}">${lab}</span></div>
+      ${l.meds.length ? `<div class="wf-meds">${l.meds.map((m) => medChip(m)).join('')}</div>` : ''}
+      <div class="wf-pl-text">${l.text}</div>
+      ${l.alts.length ? `<div class="wf-pl-alts"><span class="wf-pl-altl">Alternatives</span>${l.alts.map((a) => `<div>${medChip(a.med)} ${a.text}</div>`).join('')}</div>` : ''}</div>`;
   }
 
   function vPlan() {
@@ -466,14 +440,12 @@
     if (a.lvl === 'bad') return html;
     if (!chosen().length) return html + '<div class="wf-card"><div class="wf-hint">Select at least one substance in Intake.</div></div>';
     const p = buildPlan();
-    TIERS.forEach((t) => {
-      const rows = p.tiers[t.id];
-      if (!rows.length) return;
-      html += `<div class="wf-card wf-plan" style="border-left:3px solid ${t.color}"><div class="wf-h" style="color:${t.color}">${t.title} <span class="wf-count">${rows.length}</span></div><div class="wf-hint">${t.hint}</div>${rows.map(medRow).join('')}</div>`;
-    });
-    if (p.actions.length) html += `<div class="wf-card"><div class="wf-h">Actions &amp; monitoring</div>${p.actions.map((x) => itemHTML(x.it, x.col)).join('')}</div>`;
+    html += `<div class="wf-card"><div class="wf-h">Treatment plan</div><div class="wf-hint">One plan for this patient, built from all substances and clinical factors together. Each medication appears once.</div>
+      ${GROUPS.map((g) => { const ls = p.lines.filter((l) => l.group === g); return ls.length ? `<div class="wf-group">${g}</div>${ls.map(planRow).join('')}` : ''; }).join('')}</div>`;
+    if (p.avoid.size) html += `<div class="wf-card" style="border-left:3px solid #ef5350"><div class="wf-h" style="color:#ef5350">Avoid</div>${[...p.avoid].map(([m, why]) => `<div class="wf-av">${medChip(m, true)}<span>${esc(why.join('; '))}</span></div>`).join('')}</div>`;
+    if (p.actions.length) html += `<div class="wf-card"><div class="wf-h">Actions &amp; monitoring</div>${p.actions.map((x) => itemHTML(x, 'var(--accent)')).join('')}</div>`;
     html += `<div class="wf-card wf-pwlinks"><span class="wf-muted">Full pathways:</span> ${chosen().map((s) => `<button class="wf-link" data-pw="${s.pw}" style="color:${COL[s.id]}">${s.label} →</button>`).join('')}</div>`;
-    html += `<div class="wf-actions"><button class="wf-btn" id="wfCopy">Copy plan</button><button class="wf-btn ghost" id="wfPrint">Print</button><button class="wf-btn ghost danger" id="wfReset">Start new assessment</button></div>`;
+    html += '<div class="wf-actions"><button class="wf-btn" id="wfCopy">Copy plan</button><button class="wf-btn ghost" id="wfPrint">Print</button><button class="wf-btn ghost danger" id="wfReset">Start new assessment</button></div>';
     return html;
   }
 
@@ -491,12 +463,18 @@
     a.reasons.forEach((r) => L.push('  - ' + r));
     if (a.lvl !== 'bad') {
       const p = buildPlan();
-      TIERS.forEach((t) => {
-        if (!p.tiers[t.id].length) return;
-        L.push(''); L.push(t.title.toUpperCase());
-        p.tiers[t.id].forEach((r) => { L.push(`  • ${r.name} — ${r.contexts.join('; ')}`); r.notes.forEach((n) => L.push('      ' + strip(n))); });
+      GROUPS.forEach((g) => {
+        const ls = p.lines.filter((l) => l.group === g);
+        if (!ls.length) return;
+        L.push(''); L.push(g.toUpperCase());
+        ls.forEach((l) => {
+          L.push(`  • ${l.purpose}: ${l.meds.join(' + ') || '—'} [${STATUS[l.status][0]}]`);
+          L.push('      ' + strip(l.text));
+          l.alts.forEach((x) => L.push(`      Alternative: ${x.med} — ${strip(x.text)}`));
+        });
       });
-      if (p.actions.length) { L.push(''); L.push('ACTIONS & MONITORING'); p.actions.forEach((x) => L.push('  • ' + strip(x.it.text))); }
+      if (p.avoid.size) { L.push(''); L.push('AVOID'); p.avoid.forEach((why, m) => L.push(`  • ${m} — ${why.join('; ')}`)); }
+      if (p.actions.length) { L.push(''); L.push('ACTIONS & MONITORING'); p.actions.forEach((x) => L.push('  • ' + strip(x.text))); }
     }
     L.push('');
     L.push('Decision support only — not an order. Dosing, contraindications and interactions to be verified by the prescriber.');
@@ -553,7 +531,7 @@
       else fallback();
       return;
     }
-    if (t.id === 'wfPrint') { document.querySelectorAll('#wfRoot details').forEach((d) => { d.open = true; }); document.body.classList.add('wf-printing'); try { window.print(); } catch (err) { /* printing blocked in sandboxed previews */ } setTimeout(() => document.body.classList.remove('wf-printing'), 500); return; }
+    if (t.id === 'wfPrint') { document.body.classList.add('wf-printing'); try { window.print(); } catch (err) { /* printing blocked in sandboxed previews */ } setTimeout(() => document.body.classList.remove('wf-printing'), 500); return; }
     if (t.id === 'wfReset') {
       if (t.dataset.armed) { S = fresh(); render(); return; }
       t.dataset.armed = '1'; t.textContent = 'Click again to clear everything';
@@ -684,15 +662,18 @@
   .wf-legend{display:flex;flex-wrap:wrap;gap:.5rem 1.1rem;font-size:11px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;margin:.25rem 0 0}
   .wf-legend span{display:inline-flex;align-items:center;gap:.35rem}
   .wf-legend i{font-style:normal;width:16px;height:16px;border-radius:50%;border:1.5px solid;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
-  .wf-count{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--text-muted);margin-left:.3rem}
-  .wf-plan-row{padding:.55rem 0;border-top:1px solid var(--border)}
-  .wf-plan-top{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .7rem}
-  .wf-plan-for{font-size:12px;color:var(--text-dim)}
-  .wf-plan-why{margin-top:.3rem;font-size:12px;color:var(--text-dim)}
-  .wf-plan-why summary{cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-muted);width:max-content}
-  .wf-plan-why ul{margin:.35rem 0 0 1.1rem;line-height:1.55}
-  .wf-plan-why li + li{margin-top:.25rem}
-  .wf-plan-why b{color:var(--text);font-weight:500}
+  .wf-group{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text);margin:1.1rem 0 .1rem}
+  .wf-pl{padding:.7rem 0;border-top:1px solid var(--border)}
+  .wf-pl-head{display:flex;justify-content:space-between;align-items:center;gap:.6rem}
+  .wf-pl-purpose{font-size:13px;font-weight:500;color:var(--text)}
+  .wf-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;border:1px solid;border-radius:999px;padding:.05rem .55rem;white-space:nowrap}
+  .wf-pl-text{font-size:12.5px;color:var(--text-dim);margin-top:.4rem;line-height:1.55}
+  .wf-pl-text b{color:var(--text);font-weight:500}
+  .wf-pl-alts{margin-top:.5rem;padding-left:.75rem;border-left:2px solid var(--border);font-size:12px;color:var(--text-dim);display:flex;flex-direction:column;gap:.35rem;line-height:1.5}
+  .wf-pl-altl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+  .wf-pl-alts .pw-med{margin-right:.35rem}
+  .wf-av{display:flex;align-items:baseline;flex-wrap:wrap;gap:.3rem .6rem;padding:.5rem 0;border-top:1px dashed var(--border);font-size:12.5px;color:var(--text-dim)}
+  .wf-card > .wf-h + .wf-av{border-top:none}
   .wf-pwlinks{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .9rem;font-size:12px}
   .wf-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
   .wf-nav{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-top:.5rem}
