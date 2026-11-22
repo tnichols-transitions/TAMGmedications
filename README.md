@@ -5,7 +5,7 @@ Clinical reference for residential SUD treatment, deployed on Netlify at https:/
 ## Files
 
 - `index.html` — Medication Reference and Treatment Pathways (single-file site).
-- `workflow.js` — Clinical Workflow, CIWA-Ar and COWS tabs (drop-in module). Loaded by `index.html` with:
+- `workflow.js` — Clinical Workflow, CIWA-Ar, COWS, Opioid conversion and Benzo conversion tabs (drop-in module). Loaded by `index.html` with:
 
   ```html
   <script src="workflow.js"></script>
@@ -44,6 +44,15 @@ A final consistency pass guarantees that a drug on the Avoid list never appears 
 ## CIWA-Ar and COWS calculators
 
 Separate tabs (`#ciwa`, `#cows`) for scoring withdrawal at any time. Tap a score per item; the running total, severity band and the matching interpretation row update live and stay visible while scrolling. **Copy score** copies the total, band, time and item-by-item breakdown for the chart. Scores are kept in memory only and are not read by the Clinical Workflow.
+
+## Dose conversion calculators
+
+Separate tabs (`#opioid-conv`, `#benzo-conv`). Enter every drug the patient takes with its total daily dose (fentanyl patch in mcg/hr); add rows for combinations. **Copy result** copies the per-drug breakdown, total and conversion.
+
+- **Opioid conversion** — total morphine milligram equivalents (MME/day) using the CDC 2022 conversion factors (codeine 0.15, dihydrocodeine 0.25, fentanyl patch 2.4 per mcg/hr, hydrocodone 1, hydromorphone 5, methadone 4.7, morphine 1, oxycodone 1.5, oxymorphone 3, tapentadol 0.4, tramadol 0.2). Flags ≥50 and ≥90 MME/day. Converts to a target opioid with a 25–50% reduction for incomplete cross-tolerance. Methadone and fentanyl patch are never offered as targets, and a warning appears when either is in the total. Buprenorphine, kratom and 7-OH are not converted.
+- **Benzo conversion** — total diazepam-equivalent dose using Ashton equivalents (to diazepam 10 mg: alprazolam 0.5, chlordiazepoxide 25, clobazam 20, clonazepam 0.5, clorazepate 15, estazolam 1–2, flurazepam 15–30, lorazepam 1, oxazepam 20, quazepam 20, temazepam 20, triazolam 0.5, zaleplon 20, zolpidem 20). Converts to diazepam, clonazepam or lorazepam and shows the first 10% taper step from the rule set. The workflow's taper row links here.
+
+Conversion tables live in the `OPIOIDS` and `BZDS` constants in `workflow.js`.
 
 ### Rule set
 

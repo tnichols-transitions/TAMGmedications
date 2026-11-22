@@ -192,7 +192,7 @@
       let purpose, txt, st = 'start';
       if (sub.aud && sub.bzd) { purpose = 'Alcohol withdrawal + benzodiazepine taper'; txt = `<b>One ${agent.toLowerCase()} regimen for both.</b> Treat alcohol withdrawal first (${ciwaTxt}), then continue the same agent as a supervised taper: ${taper}`; }
       else if (sub.aud) { purpose = 'Alcohol withdrawal'; txt = `<b>${agent}</b> — ${ciwaTxt}.`; st = 'cond'; }
-      else { purpose = 'Benzodiazepine taper'; txt = `<b>Convert to ${agent.toLowerCase()}</b> using an equivalence table (e.g., Ashton), verified by the prescriber. Goal: ${taper}`; }
+      else { purpose = 'Benzodiazepine taper'; txt = `<b>Convert to ${agent.toLowerCase()}</b> using an equivalence table (e.g., Ashton), verified by the prescriber. Goal: ${taper} ${calc('benzo-conv', 'Benzo conversion')}`; }
       const alts = [];
       if (sub.bzd && !hepatic) alts.push({ med: 'Clonazepam', text: 'alternative taper agent.' });
       if (sub.aud) alts.push({ med: 'Phenobarbital', text: 'for benzodiazepine-resistant withdrawal, typically in more closely monitored settings.' });
@@ -458,6 +458,132 @@
     if (t.dataset.scReset) { SC[kind] = {}; renderScale(kind); }
   }
 
+  /* ── Dose conversion calculators (separate tabs) ──
+     Opioids: CDC Clinical Practice Guideline for Prescribing Opioids for Pain (2022), MME conversion factors.
+     Benzodiazepines: Ashton Manual approximate equivalents to diazepam 10 mg. */
+  const OPIOIDS = [
+    { id: 'codeine', name: 'Codeine', f: 0.15 },
+    { id: 'dihydrocodeine', name: 'Dihydrocodeine', f: 0.25 },
+    { id: 'fentanyl', name: 'Fentanyl transdermal patch', f: 2.4, unit: 'mcg/hr', noTarget: true },
+    { id: 'hydrocodone', name: 'Hydrocodone (e.g., Norco, Vicodin)', f: 1 },
+    { id: 'hydromorphone', name: 'Hydromorphone', f: 5 },
+    { id: 'methadone', name: 'Methadone', f: 4.7, noTarget: true },
+    { id: 'morphine', name: 'Morphine', f: 1 },
+    { id: 'oxycodone', name: 'Oxycodone', f: 1.5 },
+    { id: 'oxymorphone', name: 'Oxymorphone', f: 3 },
+    { id: 'tapentadol', name: 'Tapentadol', f: 0.4 },
+    { id: 'tramadol', name: 'Tramadol', f: 0.2 }
+  ];
+  const BZDS = [ // mg approximately equivalent to diazepam 10 mg; [low, high] where the source gives a range
+    { id: 'alprazolam', name: 'Alprazolam', eq: [0.5, 0.5] },
+    { id: 'chlordiazepoxide', name: 'Chlordiazepoxide', eq: [25, 25] },
+    { id: 'clobazam', name: 'Clobazam', eq: [20, 20] },
+    { id: 'clonazepam', name: 'Clonazepam', eq: [0.5, 0.5] },
+    { id: 'clorazepate', name: 'Clorazepate', eq: [15, 15] },
+    { id: 'diazepam', name: 'Diazepam', eq: [10, 10] },
+    { id: 'estazolam', name: 'Estazolam', eq: [1, 2] },
+    { id: 'flurazepam', name: 'Flurazepam', eq: [15, 30] },
+    { id: 'lorazepam', name: 'Lorazepam', eq: [1, 1] },
+    { id: 'oxazepam', name: 'Oxazepam', eq: [20, 20] },
+    { id: 'quazepam', name: 'Quazepam', eq: [20, 20] },
+    { id: 'temazepam', name: 'Temazepam', eq: [20, 20] },
+    { id: 'triazolam', name: 'Triazolam', eq: [0.5, 0.5] },
+    { id: 'zaleplon', name: 'Zaleplon (Z-drug)', eq: [20, 20] },
+    { id: 'zolpidem', name: 'Zolpidem (Z-drug)', eq: [20, 20] }
+  ];
+  const CONVS = {
+    opioid: { list: OPIOIDS, targets: OPIOIDS.filter((o) => !o.noTarget), title: 'Opioid conversion — morphine milligram equivalents (MME)',
+      sub: 'Add each opioid the patient takes with its total daily dose. Gives total MME/day and an approximate daily dose of a target opioid. Conversion factors: CDC Clinical Practice Guideline for Prescribing Opioids for Pain (2022).' },
+    bzd: { list: BZDS, targets: BZDS.filter((b) => ['diazepam', 'clonazepam', 'lorazepam'].includes(b.id)), title: 'Benzodiazepine conversion — diazepam equivalents',
+      sub: 'Add each benzodiazepine or Z-drug with its total daily dose. Gives the total diazepam-equivalent dose and the matching dose of the taper agent. Equivalents: Ashton Manual (approximate, for chronic use).' }
+  };
+  const CV = { opioid: { rows: [{ d: '', v: '' }], target: 'morphine' }, bzd: { rows: [{ d: '', v: '' }], target: 'diazepam' } };
+  const fmt = (n) => String(Math.round(n * 10) / 10);
+  const rng = (lo, hi) => (fmt(lo) === fmt(hi) ? fmt(lo) : `${fmt(lo)}–${fmt(hi)}`);
+  const unitOf = (kind, id) => (kind === 'opioid' && id === 'fentanyl' ? 'mcg/hr' : 'mg/day');
+
+  function cvCompute(kind) {
+    const K = CONVS[kind], items = [];
+    CV[kind].rows.forEach((r) => {
+      const d = K.list.find((x) => x.id === r.d), v = parseFloat(r.v);
+      if (!d || !(v > 0)) return;
+      const lo = kind === 'opioid' ? v * d.f : (v * 10) / d.eq[1];
+      const hi = kind === 'opioid' ? v * d.f : (v * 10) / d.eq[0];
+      items.push({ d, v, lo, hi });
+    });
+    return { items, lo: items.reduce((a, x) => a + x.lo, 0), hi: items.reduce((a, x) => a + x.hi, 0) };
+  }
+
+  function cvResult(kind) {
+    const K = CONVS[kind], c = cvCompute(kind), tgt = K.targets.find((t) => t.id === CV[kind].target) || K.targets[0];
+    if (!c.items.length) return { html: '<div class="wf-hint" style="margin:0">Enter at least one drug and daily dose.</div>', text: '' };
+    const T = [];
+    let html = '';
+    if (kind === 'opioid') {
+      const m = c.lo, band = m >= 90 ? ['bad', 'Overdose risk substantially higher at ≥90 MME/day — careful reassessment of benefit and risk.'] : m >= 50 ? ['warn', 'Overdose risk rises at ≥50 MME/day — ensure naloxone; reassess benefit and risk.'] : ['ok', 'Below 50 MME/day. Overdose risk still rises with any dose — naloxone for patients with OUD.'];
+      const eq = m / tgt.f;
+      html += `<div class="cv-total cv-b-${band[0]}"><div class="cv-n">${fmt(m)}<span> MME/day</span></div><div class="cv-band">${band[1]}</div></div>
+        <div class="cv-conv"><div class="wf-h" style="margin:0 0 .3rem">Converted to ${esc(tgt.name)}</div>
+          <div>Equianalgesic estimate: <b>${fmt(eq)} mg/day</b></div>
+          <div>Suggested starting range: <b>${rng(eq * 0.5, eq * 0.75)} mg/day</b> — 25–50% lower for incomplete cross-tolerance, divided per formulation. Prescriber to verify and titrate.</div></div>`;
+      T.push(`Total: ${fmt(m)} MME/day`, `Converted to ${tgt.name}: ~${fmt(eq)} mg/day equianalgesic; start ${rng(eq * 0.5, eq * 0.75)} mg/day (25–50% reduction for incomplete cross-tolerance)`);
+      if (c.items.some((x) => x.d.id === 'methadone' || x.d.id === 'fentanyl')) html += '<div class="cv-warn"><b>Methadone or fentanyl patch included:</b> its MME estimates exposure only. Do not convert to or from methadone or transdermal fentanyl with this number — use a specialist protocol.</div>';
+    } else {
+      const tlo = (c.lo * tgt.eq[0]) / 10, thi = (c.hi * tgt.eq[1]) / 10;
+      html += `<div class="cv-total cv-b-ok"><div class="cv-n">${rng(c.lo, c.hi)}<span> mg/day diazepam-equivalent</span></div><div class="cv-band">Approximate total daily benzodiazepine exposure.</div></div>
+        <div class="cv-conv"><div class="wf-h" style="margin:0 0 .3rem">Converted to ${esc(tgt.name)}</div>
+          <div>Equivalent dose: <b>${rng(tlo, thi)} mg/day</b>, divided per the agent's dosing interval.</div>
+          <div>Taper (rule set): reduce by <b>10% of the current dose</b> at each change, every 2–4 weeks — first step ≈ <b>${rng(tlo * 0.9, thi * 0.9)} mg/day</b>. Hold or extend the interval if withdrawal emerges.</div></div>
+        <div class="cv-warn">Switch gradually (one dose at a time) rather than all at once. Equivalents vary between sources — the prescriber verifies the final dose; use lower doses with liver disease or age ≥65.</div>`;
+      T.push(`Total: ${rng(c.lo, c.hi)} mg/day diazepam-equivalent`, `Converted to ${tgt.name}: ${rng(tlo, thi)} mg/day; first 10% reduction ≈ ${rng(tlo * 0.9, thi * 0.9)} mg/day`);
+    }
+    const text = [kind === 'opioid' ? 'OPIOID CONVERSION (CDC 2022 MME factors)' : 'BENZODIAZEPINE CONVERSION (Ashton equivalents)', 'Calculated: ' + new Date().toLocaleString()]
+      .concat(c.items.map((x) => `  ${x.d.name} ${fmt(x.v)} ${unitOf(kind, x.d.id)} = ${rng(x.lo, x.hi)} ${kind === 'opioid' ? 'MME' : 'mg diazepam-eq'}`), T, ['Approximate — prescriber to verify before dosing.']).join('\n');
+    return { html, text };
+  }
+
+  function renderConv(kind) {
+    const root = document.getElementById('cvRoot-' + kind);
+    if (!root) return;
+    const K = CONVS[kind], st = CV[kind];
+    const opts = (sel, list, ph) => `<option value="">${ph}</option>` + list.map((d) => `<option value="${d.id}" ${d.id === sel ? 'selected' : ''}>${esc(d.name)}</option>`).join('');
+    const rows = st.rows.map((r, i) => `<div class="cv-row"><select class="cv-in" data-cv-row="${i}" aria-label="Drug">${opts(r.d, K.list, 'Select drug…')}</select>
+      <input class="cv-in" data-cv-row="${i}" type="number" min="0" step="any" inputmode="decimal" placeholder="Daily dose (${unitOf(kind, r.d)})" value="${esc(r.v)}" aria-label="Daily dose">
+      <span class="cv-unit">${unitOf(kind, r.d)}</span>
+      <button class="cv-x" data-cv-del="${i}" title="Remove" ${st.rows.length === 1 ? 'disabled' : ''}>✕</button></div>`).join('');
+    const notes = kind === 'opioid'
+      ? ['MME factors estimate total opioid exposure and overdose risk; they are approximate for switching between opioids.', 'Buprenorphine is not converted to MME (partial agonist). Kratom and 7-OH have no validated conversion.', 'Fentanyl patch: enter mcg/hr. All other opioids: total mg per day.']
+      : ['Equivalents are approximate and intended for long-term users; acute or elderly patients may need less.', 'Z-drugs (zolpidem, zaleplon) are included because they are cross-tolerant with benzodiazepines.', 'Where the source gives a range (estazolam, flurazepam) the result is shown as a range.'];
+    root.innerHTML = `<div class="pw-header"><div class="pw-title">${K.title}</div><div class="pw-sub">${K.sub}</div></div>
+      <div class="wf-card"><div class="wf-h">Current ${kind === 'opioid' ? 'opioids' : 'benzodiazepines'}</div>${rows}
+        <button class="wf-btn ghost" data-cv-add="1">+ Add another</button>
+        <div class="cv-target"><label>Convert to <select class="cv-in" data-cv-target="1">${K.targets.map((d) => `<option value="${d.id}" ${d.id === st.target ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label></div></div>
+      <div class="wf-card" id="cvRes-${kind}">${cvResult(kind).html}</div>
+      <div class="wf-card"><div class="wf-h">Notes</div><ul class="cv-notes">${notes.map((n) => `<li>${n}</li>`).join('')}</ul></div>
+      <div class="wf-actions"><button class="wf-btn" data-cv-copy="1">Copy result</button><button class="wf-btn ghost danger" data-cv-clear="1">Clear</button></div>
+      <div class="pw-note" style="margin-top:1.5rem"><b>Decision support only.</b> Conversions are approximate; dosing is the prescriber's decision. Nothing entered is saved.</div>`;
+  }
+
+  function onConvEdit(kind, e) {
+    const t = e.target, st = CV[kind];
+    if (t.dataset.cvTarget) { st.target = t.value; document.getElementById('cvRes-' + kind).innerHTML = cvResult(kind).html; return; }
+    if (t.dataset.cvRow === undefined) return;
+    const r = st.rows[+t.dataset.cvRow];
+    if (t.tagName === 'SELECT') { if (r.d !== t.value) { r.d = t.value; renderConv(kind); } return; }
+    r.v = t.value;
+    document.getElementById('cvRes-' + kind).innerHTML = cvResult(kind).html;
+  }
+
+  function onConvClick(kind, e) {
+    const t = e.target.closest('button');
+    if (!t) return;
+    const st = CV[kind];
+    if (t.dataset.cvAdd) { st.rows.push({ d: '', v: '' }); renderConv(kind); return; }
+    if (t.dataset.cvDel !== undefined) { st.rows.splice(+t.dataset.cvDel, 1); renderConv(kind); return; }
+    if (t.dataset.cvClear) { st.rows = [{ d: '', v: '' }]; renderConv(kind); return; }
+    if (t.dataset.cvCopy) { const r = cvResult(kind); if (r.text) copyText(r.text, t, 'Copy result'); }
+  }
+
   /* ── Treatment plan view ── */
   const STATUS = { start: ['Start', '#81c995'], continue: ['Continue', '#81c995'], cond: ['Prescriber decision', 'var(--warn)'], prn: ['As needed', 'var(--accent)'] };
   const strip = (h) => h.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
@@ -682,6 +808,25 @@
   .sc-band b{font-family:'IBM Plex Mono',monospace;color:var(--text)}
   .sc-lab{color:var(--text);font-weight:500}
   .sc-band.on{border-color:var(--accent);background:var(--surface2);box-shadow:inset 3px 0 0 var(--accent)}
+  .cv-row{display:grid;grid-template-columns:minmax(0,1fr) 130px 56px 34px;gap:.5rem;align-items:center;margin-bottom:.55rem}
+  .cv-in{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:13px;padding:.45rem .55rem;outline:none;min-width:0}
+  .cv-in:focus{border-color:var(--accent)}
+  .cv-unit{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted)}
+  .cv-x{height:34px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer}
+  .cv-x:hover:not(:disabled){color:#ef5350;border-color:#ef5350}.cv-x:disabled{opacity:.3;cursor:default}
+  .cv-target{margin-top:.9rem;padding-top:.8rem;border-top:1px solid var(--border);font-size:12.5px;color:var(--text-dim)}
+  .cv-target label{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}.cv-target select{width:auto;min-width:200px}
+  .cv-total{border-radius:8px;padding:.75rem .9rem;border:1px solid}
+  .cv-n{font-family:'IBM Plex Mono',monospace;font-size:1.7rem;font-weight:600;line-height:1.1;color:var(--text)}
+  .cv-n span{font-size:12px;font-weight:400;color:var(--text-dim)}
+  .cv-band{font-size:12.5px;color:var(--text-dim);margin-top:.25rem}
+  .cv-b-ok{border-color:color-mix(in srgb,#81c995 45%,transparent);background:color-mix(in srgb,#81c995 8%,transparent)}
+  .cv-warn{font-size:12px;color:var(--text-dim);margin-top:.75rem;line-height:1.55}
+  .cv-b-warn{border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:color-mix(in srgb,var(--warn) 8%,transparent)}
+  .cv-b-bad{border-color:#ef5350;background:color-mix(in srgb,#ef5350 10%,transparent)}
+  .cv-conv{margin-top:.85rem;font-size:12.5px;color:var(--text-dim);line-height:1.6}
+  .cv-conv b{color:var(--text);font-weight:600}
+  .cv-notes{margin:.35rem 0 0 1.1rem;font-size:12px;color:var(--text-dim);line-height:1.6}
   .wf-path-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
   .wf-link{background:none;border:none;color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;padding:.2rem 0}
   .wf-link:hover{text-decoration:underline}
@@ -720,7 +865,7 @@
   .wf-btn.ghost:hover{color:var(--text);border-color:var(--text-muted)}
   .wf-btn.danger:hover{color:#ef5350;border-color:#ef5350}
   .tab-bar{overflow-x:auto;scrollbar-width:none}.tab-bar::-webkit-scrollbar{display:none}
-  @media(max-width:700px){.tab-btn{padding:.6rem .8rem}.wf-row2{grid-template-columns:1fr}.wf-step-l{display:none}.wf-step.cur .wf-step-l{display:inline}.wf-scs{flex-wrap:wrap}.wf-sc{min-width:38px;height:36px}.wf-score{min-width:90px}.wf-checks.cols{grid-template-columns:1fr}.sc-band{grid-template-columns:56px 1fr}.sc-txt{grid-column:1/-1}}
+  @media(max-width:700px){.tab-btn{padding:.6rem .8rem}.wf-row2{grid-template-columns:1fr}.wf-step-l{display:none}.wf-step.cur .wf-step-l{display:inline}.wf-scs{flex-wrap:wrap}.wf-sc{min-width:38px;height:36px}.wf-score{min-width:90px}.wf-checks.cols{grid-template-columns:1fr}.sc-band{grid-template-columns:56px 1fr}.sc-txt{grid-column:1/-1}.cv-row{grid-template-columns:1fr 1fr 34px;row-gap:.3rem}.cv-row select{grid-column:1/-1}.cv-unit{display:none}.cv-in[type=number]{grid-column:1/3}}
   @media print{body.wf-printing .site-header,body.wf-printing .wf-steps,body.wf-printing .wf-nav,body.wf-printing .wf-actions,body.wf-printing .wf-hint,body.wf-printing .wf-strip,body.wf-printing .wf-pwlinks,body.wf-printing .tab-panel:not(#tab-workflow),body.wf-printing .pw-header,body.wf-printing .footer{display:none!important}
     body.wf-printing,body.wf-printing #wfRoot,body.wf-printing .wf-card,body.wf-printing .wf-acuity{background:#fff!important}
     body.wf-printing #wfRoot *{color:#000!important}
@@ -738,7 +883,9 @@
     const TABS = [
       { id: 'workflow', label: '🧭 Clinical Workflow', html: '<div id="wfRoot"></div>' },
       { id: 'ciwa', label: '🧮 CIWA-Ar', html: '<div id="scRoot-ciwa"></div>' },
-      { id: 'cows', label: '🧮 COWS', html: '<div id="scRoot-cows"></div>' }
+      { id: 'cows', label: '🧮 COWS', html: '<div id="scRoot-cows"></div>' },
+      { id: 'opioid-conv', label: '🔁 Opioid conversion', html: '<div id="cvRoot-opioid"></div>' },
+      { id: 'benzo-conv', label: '🔁 Benzo conversion', html: '<div id="cvRoot-bzd"></div>' }
     ];
     const panels = page.querySelectorAll(':scope > .tab-panel');
     let after = panels[panels.length - 1];
@@ -773,7 +920,12 @@
     wf.addEventListener('input', onInput);
     mine[1].panel.addEventListener('click', (e) => onScaleClick('ciwa', e));
     mine[2].panel.addEventListener('click', (e) => onScaleClick('cows', e));
-    render(); renderScale('ciwa'); renderScale('cows');
+    [['opioid', mine[3].panel], ['bzd', mine[4].panel]].forEach(([k, pnl]) => {
+      pnl.addEventListener('click', (e) => onConvClick(k, e));
+      pnl.addEventListener('input', (e) => onConvEdit(k, e));
+      pnl.addEventListener('change', (e) => onConvEdit(k, e));
+    });
+    render(); renderScale('ciwa'); renderScale('cows'); renderConv('opioid'); renderConv('bzd');
     const start = mine.find((m) => location.hash === '#' + m.T.id);
     if (start) start.btn.click();
   }
