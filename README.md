@@ -60,7 +60,7 @@ Conversion tables live in the `OPIOIDS` and `BZDS` constants in `workflow.js`.
 
 ### Rule set
 
-Current: **v1.3 (draft) — pending medical director approval.**
+Current: **v1.3 — approved by medical director.**
 
 v1.3 changes: benzodiazepine types at intake (alprazolam/Xanax, lorazepam/Ativan, clonazepam/Klonopin, diazepam/Valium, temazepam/Restoril, Z-drugs, designer benzodiazepines such as flubromazolam, pressed/counterfeit pills). Designer agents: no conversion — the taper agent is dosed by observed withdrawal, with a seizure-monitoring / level-of-care alert. Designer or counterfeit pills: fentanyl-contamination caution (urine drug screen, test strips) and a naloxone kit even without opioid use. Stimulant types at intake (cocaine powder, cocaine rock, methamphetamine): the bupropion + naltrexone row notes that its evidence is for methamphetamine when only cocaine is selected, and the limited-evidence note shows only the options for the selected types. **Overdose prevention (one rule):** everyone using illicit substances — any opioid use or MOUD, any stimulant use, or street/counterfeit/designer benzodiazepines — gets a naloxone kit and fentanyl test strips in the treatment / discharge plan, with overdose-response education (plus tolerance counselling for opioids). Alcohol, cannabis and prescribed benzodiazepines alone do not trigger it. The Treatment Pathways tab carries the same item for stimulants and benzodiazepines. Intake also records standard drinks per day for alcohol (documentation only) and no longer asks hours since last use.
 
