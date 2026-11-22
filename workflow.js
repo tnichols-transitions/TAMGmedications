@@ -104,6 +104,18 @@
   });
   let S = fresh();
 
+  /* ── Standard drink reference (NIAAA; US standard drink = 14 g pure alcohol) ── */
+  const DRINK_REF = `<div class="wf-drinkref">
+    <div class="wf-dr-h">One standard drink is equivalent to:</div>
+    <ul><li>12 oz regular beer (~5%)</li><li>8–9 oz malt liquor (~7%)</li><li>5 oz table wine (~12%)</li><li>1.5 oz shot of 80-proof liquor (40%)</li></ul>
+    <div class="wf-dr-h">Standard drinks per container:</div>
+    <table><tr><td>Bottle of wine (750 mL)</td><td>≈ 5</td></tr>
+      <tr><td>Pint of liquor (16 oz / 473 mL)</td><td>≈ 11</td></tr>
+      <tr><td>375 mL bottle of liquor (often called a “pint”)</td><td>≈ 8.5</td></tr>
+      <tr><td>750 mL bottle of liquor (“fifth”)</td><td>≈ 17</td></tr>
+      <tr><td>Handle of liquor (1.75 L)</td><td>≈ 39</td></tr></table>
+    <div class="wf-dr-note">Liquor counts assume 80 proof. Stronger beer, wine or spirits contain more.</div></div>`;
+
   /* ── Helpers ── */
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const any = (o) => Object.values(o).some(Boolean);
@@ -369,7 +381,7 @@
         <label class="wf-sub-top"><input type="checkbox" data-g="subs" data-k="${s.id}" ${on ? 'checked' : ''}><span class="wf-dot" style="background:${c}"></span><span class="wf-sub-name">${s.label}</span></label>
         ${on ? `<div class="wf-sub-extra">
           ${s.id === 'aud'
-            ? `<label class="wf-inline">Standard drinks per day <input type="number" min="0" max="200" step="any" inputmode="decimal" class="wf-num" data-drinks="1" value="${S.drinks ?? ''}" placeholder="—"></label>`
+            ? `<label class="wf-inline">Standard drinks per day <input type="number" min="0" max="200" step="any" inputmode="decimal" class="wf-num" data-drinks="1" value="${S.drinks ?? ''}" placeholder="—"></label>${DRINK_REF}`
             : `<label class="wf-inline">Hours since last use <input type="number" min="0" max="2000" inputmode="numeric" class="wf-num" data-hrs="${s.id}" value="${S.hrs[s.id] ?? ''}" placeholder="—"></label>`}
           ${s.id === 'oud' ? `<div class="wf-mini wf-muted">Opioid types used:</div>${check('root', 'fentanyl', 'Fentanyl / high-potency synthetic opioids')}${check('root', 'pills', 'Prescription opioid pills (e.g., Norco, Vicodin)')}${check('root', 'methadoneUse', 'Methadone (prescribed or illicit)')}${check('root', 'kratom', 'Kratom')}${check('root', 'sevenOH', 'High-potency kratom derivatives (e.g., 7-OH)')}` : ''}
         </div>` : ''}
@@ -831,6 +843,13 @@
   .cv-conv{margin-top:.85rem;font-size:12.5px;color:var(--text-dim);line-height:1.6}
   .cv-conv b{color:var(--text);font-weight:600}
   .cv-notes{margin:.35rem 0 0 1.1rem;font-size:12px;color:var(--text-dim);line-height:1.6}
+  .wf-drinkref{font-size:11.5px;color:var(--text-dim);line-height:1.5;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.55rem .65rem}
+  .wf-dr-h{font-weight:600;color:var(--text);margin:.1rem 0 .2rem}
+  .wf-drinkref ul{margin:0 0 .5rem 1rem}
+  .wf-drinkref table{width:100%;border-collapse:collapse}
+  .wf-drinkref td{padding:.15rem 0;border-top:1px dashed var(--border);vertical-align:top}
+  .wf-drinkref td:last-child{text-align:right;white-space:nowrap;padding-left:.5rem;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+  .wf-dr-note{margin-top:.4rem;font-size:10.5px;color:var(--text-muted)}
   .wf-path-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
   .wf-link{background:none;border:none;color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;padding:.2rem 0}
   .wf-link:hover{text-decoration:underline}
