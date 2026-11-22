@@ -18,7 +18,7 @@
     { id: 'bzd', label: 'Benzodiazepines / sedatives', pw: 'bzd' },
     { id: 'can', label: 'Cannabis', pw: 'can' }
   ];
-  const RULESET = 'Rule set v1.2 (draft) — consolidated single plan; pending medical director approval';
+  const RULESET = 'Rule set v1.2 — approved by medical director';
   const STEPS = ['Intake', 'Safety & history', 'Treatment plan'];
   const LAST = STEPS.length - 1;
 

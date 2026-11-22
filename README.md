@@ -60,7 +60,7 @@ Conversion tables live in the `OPIOIDS` and `BZDS` constants in `workflow.js`.
 
 ### Rule set
 
-Current: **v1.2 (draft) — consolidated single plan; pending medical director approval.** The version string is the `RULESET` constant near the top of `workflow.js` and prints on every plan. Bump it whenever a clinical rule changes.
+Current: **v1.2 — approved by medical director.** The version string is the `RULESET` constant near the top of `workflow.js` and prints on every plan. Bump it whenever a clinical rule changes.
 
 v1.2 changes: replaces the per-substance recommendation lists with one patient-level plan as described above; adds overlap rules (including long-acting methylphenidate for ADHD + stimulant use, and duloxetine for depression/anxiety + chronic pain); adds prescription opioid pills, kratom and 7-OH as opioid types. Other clinical content carries over from v1.1.
 
