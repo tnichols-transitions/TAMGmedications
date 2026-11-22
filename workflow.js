@@ -17,8 +17,8 @@
     { id: 'stim', label: 'Stimulants', pw: 'stim' },
     { id: 'bzd', label: 'Benzodiazepines / sedatives', pw: 'bzd' },
     { id: 'can', label: 'Cannabis', pw: 'can' },
-    { id: 'inh', label: 'Inhalants', pw: null },
-    { id: 'hal', label: 'Hallucinogens / empathogens', pw: null }
+    { id: 'inh', label: 'Inhalants', pw: 'inh' },
+    { id: 'hal', label: 'Hallucinogens / empathogens', pw: 'hal' }
   ];
   const RULESET = 'Rule set v1.4 (draft) — pending medical director approval';
   const STEPS = ['Intake', 'Safety & history', 'Treatment plan'];

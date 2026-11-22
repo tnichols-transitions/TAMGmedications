@@ -160,6 +160,8 @@ input[type=search]::placeholder{color:var(--text-muted);}
       <button class="pnav-btn" data-pw="stim">Stimulant Use Disorders</button>
       <button class="pnav-btn" data-pw="bzd">Benzodiazepine Use Disorder</button>
       <button class="pnav-btn" data-pw="can">Cannabis Use Disorder</button>
+      <button class="pnav-btn" data-pw="inh">Inhalant Use Disorder</button>
+      <button class="pnav-btn" data-pw="hal">Hallucinogens &amp; Empathogens</button>
     </div>
 
     <!-- AUD -->
@@ -760,6 +762,239 @@ input[type=search]::placeholder{color:var(--text-muted);}
       </div>
     </div><!-- /pw-can -->
 
+    <!-- INHALANT USE DISORDER -->
+    <div class="pathway-panel" id="pw-inh">
+      <div class="pw-header">
+        <div class="pw-title" style="color:#ffab91">Inhalant Use Disorder</div>
+        <div class="pw-sub">No FDA-approved pharmacotherapy · Medical workup depends on the product used</div>
+      </div>
+      <div class="phases">
+
+        <div class="phase open">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ffab9122;color:#ffab91">1</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Assessment & Medical Stabilization</div>
+              <div class="phase-timing">Day 1–3</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Key Assessments</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Identify the product(s)</b> — nitrous oxide (whippets, chargers, balloons, tanks); volatile solvents, aerosols and fuels (toluene in paint and glue, butane, propane, computer duster, gasoline); alkyl nitrites (poppers). Medical risks differ by product</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span>Pattern of use — frequency, amount (e.g., chargers or cans per day), method (sniffing, huffing, bagging) and co-use with alcohol or other drugs</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Neurologic exam</b> — gait, balance, sensation, reflexes and cognition; inhalant toxicity is most often neurologic</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span>Most common in adolescents and young adults; screen for trauma, mood disorders and school or work functioning</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Product-Specific Medical Workup</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Nitrous oxide</b> — vitamin B12, methylmalonic acid and homocysteine (B12 can look normal while functionally inactivated), CBC; spine MRI if signs of myelopathy (subacute combined degeneration)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Solvents / aerosols / fuels</b> — ECG (arrhythmia, QTc); LFTs, BUN/creatinine, electrolytes and blood gas (toluene can cause renal tubular acidosis and severe low potassium)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Alkyl nitrites (poppers)</b> — methemoglobin level if cyanosis or low oxygen saturation; ask about vision changes (poppers maculopathy); never combine with sildenafil or tadalafil (severe hypotension)</span></div>
+              </div>
+            </div>
+            <div class="pw-note"><b>⚠ Sudden sniffing death:</b> volatile solvents sensitize the heart to adrenaline — fatal arrhythmia can occur even with first use. Do not startle, chase or physically exert an intoxicated patient. Significant methemoglobinemia from nitrites needs emergency care (methylene blue).</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ffab9122;color:#ffab91">2</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Withdrawal & Symptom Management</div>
+              <div class="phase-timing">Week 1–2</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Withdrawal</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span>Usually mild and not dangerous — irritability, anxiety, insomnia, cravings, nausea; more pronounced after heavy daily solvent use</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span>No validated withdrawal scale; monitor sleep, mood and cravings</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Hydroxyzine</b> for anxiety and <b>trazodone</b> for sleep — non-habit-forming; avoid benzodiazepines (overlapping CNS depression)</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Nitrous Oxide — Vitamin B12 Replacement</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Vitamin B12</b> per prescriber — intramuscular (cyanocobalamin or hydroxocobalamin) when neurologic symptoms are present; continue until neurologic recovery plateaus</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span>Oral B12 may be enough for mild deficiency without neurologic signs</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Abstinence is essential</b> — continued nitrous oxide use blocks recovery; deficits can become permanent if untreated</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ffab9122;color:#ffab91">3</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Psychosocial Treatment (Primary Approach)</div>
+              <div class="phase-timing">Throughout treatment</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Evidence-Informed Interventions</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Motivational interviewing</b> and <b>CBT</b> — triggers, coping skills, refusal skills, relapse prevention</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Contingency management</b> — tangible reinforcement for abstinence</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Family-based therapy</b> — especially for adolescents; involve caregivers in supervision and safe storage of household products</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span>Reduce access to products and re-engage with school, work and structured activities</span></div>
+              </div>
+            </div>
+            <div class="pw-note"><b>Note:</b> No medication has controlled-trial evidence for inhalant use disorder. Medications are used for product-specific medical complications (e.g., vitamin B12) and co-occurring conditions.</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#ffab9122;color:#ffab91">4</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Co-occurring Conditions & Long-term Follow-up</div>
+              <div class="phase-timing">Ongoing</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Common Comorbidities & Considerations</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Cognitive impairment</b> — attention, memory and executive deficits with chronic solvent use; neuropsychological testing and cognitive rehabilitation</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Neuropathy / myelopathy</b> — physical and occupational therapy; repeat neurologic exam during B12 replacement</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Depression and anxiety</b> — SSRIs; reassess after a period of abstinence</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Polysubstance use</b> — alcohol and cannabis are common; if illicit drugs are also used, add naloxone and fentanyl test strips to the discharge plan</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#ffab91"></div><span><b>Harm reduction</b> — never use alone; avoid bagging or covering the face; do not inhale nitrous oxide directly from a tank (frostbite, lung injury); sit down when using</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /pw-inh -->
+
+    <!-- HALLUCINOGEN & EMPATHOGEN USE -->
+    <div class="pathway-panel" id="pw-hal">
+      <div class="pw-header">
+        <div class="pw-title" style="color:#80deea">Hallucinogen & Empathogen Use</div>
+        <div class="pw-sub">Psychedelics, MDMA and dissociatives · No FDA-approved pharmacotherapy</div>
+      </div>
+      <div class="phases">
+
+        <div class="phase open">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#80deea22;color:#80deea">1</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Assessment & Acute Management</div>
+              <div class="phase-timing">Day 1–3</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Key Assessments</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Identify the substance(s)</b> — classic psychedelics (psilocybin, LSD, DMT, mescaline/peyote), empathogens (MDMA, ecstasy, molly), dissociatives (ketamine; also PCP, DXM). Risks and dependence potential differ</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span>Pattern, setting and co-use (alcohol, stimulants, cannabis); whether products were tested</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span>Mental status — anxiety, mood, persisting perceptual changes and psychosis; personal or family history of psychosis or bipolar disorder</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span>Dependence is uncommon with classic psychedelics; <b>ketamine</b> and <b>MDMA</b> carry higher risk of repeated, escalating use</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Acute Presentations</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Acute anxiety / panic</b> — calm, low-stimulation setting and reassurance; medication for severe agitation per prescriber or emergency department</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>MDMA toxicity</b> — hyperthermia, low sodium (confusion, headache, vomiting after heavy water intake) and serotonin syndrome are emergencies</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Persistent psychosis</b> after use — antipsychotic per prescriber; evaluate for a primary psychotic or bipolar disorder</span></div>
+              </div>
+            </div>
+            <div class="pw-note"><b>⚠ Emergency:</b> hyperthermia, seizures, severe agitation, confusion after MDMA (possible low sodium) or signs of serotonin syndrome (fever, rigidity, clonus) need immediate emergency evaluation.</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#80deea22;color:#80deea">2</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Early Abstinence & Symptom Management</div>
+              <div class="phase-timing">Week 1–4</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">By Substance</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Classic psychedelics</b> — no physical withdrawal syndrome</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>MDMA</b> — low mood, fatigue and irritability for several days after use; monitor mood and suicidal ideation</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Ketamine</b> — cravings, dysphoria, anxiety and insomnia; physical withdrawal is limited but psychological dependence can be significant</span></div>
+              </div>
+            </div>
+            <div class="pw-section">
+              <div class="pw-section-title">Symptom-Targeted Medications</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Hydroxyzine</b> for anxiety and <b>trazodone</b> for sleep, as needed</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>SSRIs</b> for persistent depression or anxiety — if MDMA use may continue, counsel on serotonin-syndrome risk with serotonergic medications (SSRIs, SNRIs, trazodone, mirtazapine, MAOIs)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Hallucinogen persisting perception disorder (HPPD)</b> — reassurance and avoiding triggers (cannabis, stimulants); limited evidence for clonidine or lamotrigine; psychiatry consult</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#80deea22;color:#80deea">3</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Psychosocial Treatment (Primary Approach)</div>
+              <div class="phase-timing">Throughout treatment</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Evidence-Informed Interventions</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Motivational interviewing / MET</b> — explore ambivalence; many patients do not see hallucinogen use as a problem</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>CBT and relapse prevention</b> — triggers linked to social settings (festivals, clubs, peer groups)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Contingency management</b> — particularly for repeated MDMA or ketamine use</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span>Harm-reduction education for patients who may return to use — never use alone, avoid mixing, keep cool and pace fluids with MDMA</span></div>
+              </div>
+            </div>
+            <div class="pw-note"><b>Note:</b> No medication is approved for hallucinogen, MDMA or ketamine use disorder. Psychedelic-assisted therapy is a research treatment for other conditions, not a treatment for hallucinogen use disorder. Avoid esketamine for depression in patients with ketamine use disorder.</div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:#80deea22;color:#80deea">4</div>
+            <div class="phase-title-wrap">
+              <div class="phase-title">Co-occurring Conditions & Medical Follow-up</div>
+              <div class="phase-timing">Ongoing</div>
+            </div>
+            <svg class="phase-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">
+            <div class="pw-section">
+              <div class="pw-section-title">Common Comorbidities & Considerations</div>
+              <div class="pw-items">
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Ketamine</b> — bladder damage (ketamine cystitis: pain, frequency, blood in urine) — urinalysis and urology referral; LFTs (ketamine-related bile duct injury)</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>MDMA</b> — mood, anxiety and memory problems with heavy use; check sodium after recent heavy use</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Psychosis and bipolar disorder</b> — hallucinogens can trigger psychosis or mania in vulnerable patients; abstinence is strongly advised</span></div>
+                <div class="pw-item"><div class="pw-dot" style="background:#80deea"></div><span><b>Overdose prevention</b> — illicit hallucinogens, MDMA and ketamine can be contaminated with fentanyl; add a naloxone kit and fentanyl test strips to the treatment / discharge plan</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /pw-hal -->
+
     <div class="footer"><strong>Clinical reference only.</strong> Treatment pathways are general frameworks and must be adapted to each patient's individual clinical presentation, comorbidities, and preferences. Consult current clinical guidelines and institutional protocols.</div>
   </div><!-- /tab-pathways -->
 
@@ -777,7 +1012,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 /* ── Pathway nav ── */
-const PATHWAY_COLORS = {aud:'#ffb74d',oud:'#81c995',stim:'#ce93d8',bzd:'#4fc3f7',can:'#a5d6a7'};
+const PATHWAY_COLORS = {aud:'#ffb74d',oud:'#81c995',stim:'#ce93d8',bzd:'#4fc3f7',can:'#a5d6a7',inh:'#ffab91',hal:'#80deea'};
 document.querySelectorAll('.pnav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const pw = btn.dataset.pw;

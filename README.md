@@ -65,7 +65,7 @@ Current: **v1.4 (draft) — pending medical director approval.**
 v1.4 changes: two new substance categories.
 - **Inhalants** — types: nitrous oxide (whippets), solvents/aerosols/fuels, alkyl nitrites (poppers). Nitrous oxide adds a vitamin B12 row (check B12, methylmalonic acid, homocysteine; replace per prescriber). Solvents add a sudden-cardiac-death / ECG / labs alert. Poppers add a methemoglobinemia and PDE5-inhibitor caution. No type selected prompts staff to identify the product. Inhalants are legal products and do not trigger the naloxone rule.
 - **Hallucinogens / empathogens** — types: psilocybin, LSD, MDMA, ketamine, other (DMT, mescaline). No FDA-approved medication; screen for HPPD, mood symptoms and persisting psychosis. MDMA adds a serotonin-syndrome caution with serotonergic medications; ketamine adds a bladder (ketamine cystitis) caution. Counts as illicit use for the naloxone rule.
-- Neither category has a Treatment Pathways page yet, so the plan's "Full pathways" links skip them.
+- Treatment Pathways pages for both (Inhalant Use Disorder; Hallucinogens & Empathogens), in four phases: assessment and medical workup, withdrawal / early abstinence, psychosocial treatment, co-occurring conditions and follow-up. The plan's "Full pathways" links open them.
 
 v1.3: approved by medical director.
 
