@@ -99,7 +99,7 @@
 
   /* ── State (in memory only) ── */
   const fresh = () => ({
-    step: 0, subs: {}, hrs: {}, fentanyl: false, methadoneUse: false, moud: 'none',
+    step: 0, subs: {}, hrs: {}, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
     preg: 'na', older: false, emerg: {}, review: {}, ciwa: {}, cows: {}, f: {}
   });
   let S = fresh();
@@ -181,6 +181,9 @@
       }
       if (sub.oud && w) { const b = cowsBand(w.total); act(b[1] === 'ok' ? 'go' : b[1] === 'warn' ? 'caution' : 'avoid', `<b>COWS ${w.total} — ${b[0].toLowerCase()}${w.done < w.n ? ` (partial — ${w.done}/${w.n} items)` : ''}.</b>${w.total > 24 ? ' Notify prescriber; assess hydration and level of care.' : ''}`); }
       line('Safety & nutrition', 'Overdose prevention', ['Naloxone'], '<b>Naloxone kit</b> at discharge (and for family). Counsel on loss of tolerance after a residential stay.');
+      if (sub.oud && S.pills) act('caution', '<b>Prescription opioid pills (e.g., Norco, Vicodin):</b> check the PDMP and coordinate with any current prescriber. Pills from non-pharmacy sources may be counterfeit and contain fentanyl — if so, also check the fentanyl box (switches to low-dose induction).');
+      if (sub.oud && S.kratom) act('caution', `<b>Kratom:</b> partial opioid agonist — withdrawal is usually milder and COWS still applies. ${S.fentanyl || S.pills || S.methadoneUse || S.sevenOH ? 'Treat the opioid use disorder as a whole.' : 'For mild use, symptomatic withdrawal care may be enough; buprenorphine for moderate–severe kratom use disorder (evidence from case series).'} Check LFTs (kratom-associated liver injury) and ask about high-dose use (seizure reports) and adulterated products.`);
+      if (sub.oud && S.sevenOH) act('alert', '<b>High-potency kratom derivatives (7-OH):</b> potent full mu-agonist effects — manage as opioid use disorder; withdrawal can be as severe as with other opioids. Evidence on induction approach is limited — prescriber to decide timing; consider low-dose induction with heavy daily use.');
       if (sub.aud || sub.bzd) act('caution', '<b>Opioids with alcohol/sedatives:</b> heightened respiratory-depression risk. Do not withhold MOUD for this reason — monitor closely.');
       if (preg) act('alert', '<b>Pregnancy:</b> MOUD is the standard of care; avoid medically supervised withdrawal without MOUD. Coordinate with OB.');
     }
@@ -232,45 +235,72 @@
       line('Maintenance', 'Alcohol use disorder', primary ? [primary] : [], txt, { status: st, alts });
     }
 
-    /* 5 ─ Stimulants */
+    /* 5 ─ ADHD and stimulants, decided together so one medication can treat both */
+    const mphBad = [f.cardiac && 'cardiac disease', f.psychoticD && 'psychotic disorder'].filter(Boolean);
+    let stimCovered = false, adhdViaStim = false;
+    if (f.adhd) {
+      if (mphBad.length) no('Methylphenidate', mphBad.join(', '));
+      const mphTxt = '<b>Long-acting methylphenidate</b> (extended-release, abuse-deterrent formulation). Controlled substance: supervised or limited dispensing, PDMP check and urine drug screens.' + (f.bipolar ? ' <b>Bipolar disorder:</b> start only once mood is stabilized.' : '') + (preg ? ' <b>Pregnancy:</b> weigh risk and benefit with OB.' : '');
+      if (sub.stim && !mphBad.length) {
+        stimCovered = true;
+        line('Maintenance', 'ADHD + stimulant use disorder', ['Methylphenidate'], mphTxt + ' <b>One medication for both:</b> treats ADHD and has trial evidence for reducing stimulant use when ADHD co-occurs.', { status: 'cond', alts: [{ med: 'Bupropion', text: 'non-stimulant option that also targets stimulant use.' }, { med: 'Atomoxetine', text: 'non-stimulant option for ADHD.' }] });
+      } else if (!avoid.has('Bupropion') && sub.stim) {
+        adhdViaStim = true;
+      } else if (!avoid.has('Bupropion')) {
+        line('Co-occurring', 'ADHD', ['Bupropion'], `<b>Bupropion</b> — non-stimulant option${sub.stim ? ' that also targets stimulant use' : ''}.`, { status: 'cond', alts: [{ med: 'Atomoxetine', text: 'non-stimulant option for ADHD.' }].concat(mphBad.length ? [] : [{ med: 'Methylphenidate', text: 'long-acting formulation with monitoring (PDMP, urine drug screens).' }]) });
+      } else {
+        line('Co-occurring', 'ADHD', ['Atomoxetine'], '<b>Atomoxetine</b> — non-stimulant option.', { status: 'cond', alts: mphBad.length ? [] : [{ med: 'Methylphenidate', text: 'long-acting formulation with monitoring (PDMP, urine drug screens).' }] });
+      }
+    }
+
+    /* 6 ─ Stimulants */
     if (sub.stim) {
       act('info', '<b>Stimulants: no FDA-approved medication.</b> Contingency management has the strongest evidence; add CBT and community reinforcement. Mirtazapine (methamphetamine) and topiramate/modafinil (cocaine) have limited, mixed evidence.');
       act('caution', '<b>Stimulant crash (days 1–10):</b> hypersomnia, hyperphagia, dysphoria — screen for suicidal ideation daily.');
       if (f.cardiac) act('alert', '<b>Cardiac disease with stimulant use:</b> ECG and medical follow-up.');
-      if (!avoid.has('Bupropion')) {
+      if (!stimCovered && !avoid.has('Bupropion')) {
         const ntxInPlan = lines.some((l) => l.meds.includes('Naltrexone'));
-        if (ntxInPlan) line('Maintenance', 'Stimulant use (off-label)', ['Bupropion'], '<b>Bupropion</b>, combined with the naltrexone already in this plan — the combination has trial evidence for methamphetamine use.', { status: 'cond' });
-        else if (!avoid.has('Naltrexone')) line('Maintenance', 'Stimulant use (off-label)', ['Bupropion', 'Naltrexone'], `<b>Bupropion + injectable naltrexone</b> — the combination has trial evidence for methamphetamine use.${f.liver ? ' Check LFTs.' : ''}`, { status: 'cond' });
-        else line('Maintenance', 'Stimulant use (off-label)', ['Bupropion'], '<b>Bupropion alone</b> may be considered; the naltrexone combination is not possible with this opioid plan.', { status: 'cond' });
+        const adhd = adhdViaStim ? ' <b>Also treats ADHD</b> (methylphenidate excluded — see Avoid).' : '';
+        const o = { status: 'cond', alts: adhdViaStim ? [{ med: 'Atomoxetine', text: 'non-stimulant option for ADHD.' }] : [] };
+        if (ntxInPlan) line('Maintenance', 'Stimulant use (off-label)', ['Bupropion'], '<b>Bupropion</b>, combined with the naltrexone already in this plan — the combination has trial evidence for methamphetamine use.' + adhd, o);
+        else if (!avoid.has('Naltrexone')) line('Maintenance', 'Stimulant use (off-label)', ['Bupropion', 'Naltrexone'], `<b>Bupropion + injectable naltrexone</b> — the combination has trial evidence for methamphetamine use.${f.liver ? ' Check LFTs.' : ''}${adhd}`, o);
+        else line('Maintenance', 'Stimulant use (off-label)', ['Bupropion'], '<b>Bupropion alone</b> may be considered; the naltrexone combination is not possible with this opioid plan.' + adhd, o);
       }
     }
 
-    /* 6 ─ Cannabis */
+    /* 7 ─ Cannabis */
     if (sub.can) {
       act('info', '<b>Cannabis withdrawal:</b> irritability, insomnia, reduced appetite, cravings — peaks days 2–6, mostly resolves in 1–2 weeks. Psychosocial core: MET, CBT, contingency management.');
       line('Symptom relief', 'Cannabinoid hyperemesis (if cyclic vomiting)', ['Capsaicin'], 'Topical capsaicin; haloperidol/droperidol in ED settings. Abstinence is the definitive treatment.', { status: 'prn' });
     }
 
-    /* 7 ─ Co-occurring conditions — one medication per need */
+    /* 8 ─ Co-occurring conditions — one medication per need */
     if (f.psychoticD) line('Co-occurring', 'Psychotic disorder', ['Aripiprazole', 'Risperidone'], `<b>Continue or optimize the antipsychotic.</b>${sub.can ? ' Cannabis worsens the course — strong abstinence focus.' : ''}${f.cardiac ? ' Check QTc.' : ''}`);
-    const ssriFor = [f.depression && 'depression', f.anxiety && 'anxiety', f.ptsd && 'PTSD'].filter(Boolean);
-    if (ssriFor.length) {
-      const alts = [];
-      if (f.anxiety) alts.push({ med: 'Venlafaxine', text: 'SNRI alternative for anxiety.' });
-      if (f.depression) alts.push({ med: 'Bupropion', text: 'alternative for depression (also helps stimulant/nicotine use).' });
-      if (f.depression) alts.push({ med: 'Mirtazapine', text: 'alternative for depression; also helps sleep and appetite.' });
-      const label = ssriFor.join(' / ');
-      line('Co-occurring', label.charAt(0).toUpperCase() + label.slice(1), ['Sertraline'], `<b>Sertraline</b> (SSRI) first-line${ssriFor.length > 1 ? ` — one medication covers ${ssriFor.join(' and ')}` : ''}.${f.depression ? ' Reassess after 2–4 weeks of abstinence; substance-induced symptoms often improve.' : ''}${f.ptsd ? ' Trauma-focused therapy when stable.' : ''}${f.bipolar ? ' <b>Bipolar disorder:</b> only alongside a mood stabilizer — antidepressant monotherapy risks switching.' : ''}`, { status: f.bipolar ? 'cond' : 'start', alts });
+    const moodFor = [f.depression && 'depression', f.anxiety && 'anxiety', f.ptsd && 'PTSD'].filter(Boolean);
+    const bupInPlan = lines.some((l) => l.meds.includes('Bupropion'));
+    const snri = f.pain && !f.ptsd && (f.depression || f.anxiety);
+    if (moodFor.length) {
+      const label = moodFor.join(' / ');
+      const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
+      const bip = f.bipolar ? ' <b>Bipolar disorder:</b> only alongside a mood stabilizer — antidepressant monotherapy risks switching.' : '';
+      const reassess = f.depression ? ' Reassess after 2–4 weeks of abstinence; substance-induced symptoms often improve.' : '';
+      if (snri) {
+        line('Co-occurring', cap(label) + ' + chronic pain', ['Duloxetine'], `<b>Duloxetine</b> (SNRI) — <b>one medication for both</b> ${label} and chronic pain. Add non-opioid pain strategies; coordinate with the opioid prescriber.${oplan === 'bup' ? ' The buprenorphine in this plan also helps pain.' : ''}${reassess}${bip}`, { status: f.bipolar ? 'cond' : 'start', alts: [{ med: 'Sertraline', text: `SSRI alternative for ${label}.` }] });
+      } else if (f.depression && !f.anxiety && !f.ptsd && bupInPlan) {
+        line('Co-occurring', 'Depression', [], `<b>The bupropion already in this plan also treats depression.</b>${reassess}${bip}`, { status: 'cond', alts: [{ med: 'Sertraline', text: 'add or switch if depression does not respond.' }, { med: 'Mirtazapine', text: 'alternative; also helps sleep and appetite.' }] });
+      } else {
+        const alts = [];
+        if (f.anxiety) alts.push({ med: 'Venlafaxine', text: 'SNRI alternative for anxiety.' });
+        if (f.depression) alts.push({ med: 'Bupropion', text: 'alternative for depression (also helps stimulant/nicotine use).' });
+        if (f.depression) alts.push({ med: 'Mirtazapine', text: 'alternative for depression; also helps sleep and appetite.' });
+        line('Co-occurring', cap(label), ['Sertraline'], `<b>Sertraline</b> (SSRI) first-line${moodFor.length > 1 ? ` — one medication covers ${moodFor.join(' and ')}` : ''}.${reassess}${f.ptsd ? ' Trauma-focused therapy when stable.' : ''}${bip}`, { status: f.bipolar ? 'cond' : 'start', alts });
+      }
     }
     if (f.ptsd) line('Co-occurring', 'PTSD nightmares', ['Prazosin'], '<b>Prazosin</b> at bedtime; check orthostatic BP.');
     if (f.bipolar) line('Co-occurring', 'Bipolar disorder', ['Lithium', 'Valproate', 'Lamotrigine', 'Quetiapine'], `<b>One mood stabilizer, chosen by psychiatry.</b>${renalAny ? ' Lithium needs renal caution.' : ''}`, { status: 'cond' });
-    if (f.adhd) {
-      if (!avoid.has('Bupropion')) line('Co-occurring', 'ADHD', ['Bupropion'], `<b>Prefer non-stimulant options</b> or long-acting formulations with monitoring${sub.stim ? '; especially cautious with stimulant use disorder' : ''}.`, { status: 'cond' });
-      else act('caution', '<b>ADHD:</b> prefer non-stimulant options or long-acting formulations with monitoring (bupropion excluded — see Avoid).');
-    }
-    if (f.pain) line('Co-occurring', 'Chronic pain', ['Duloxetine'], `<b>Duloxetine</b> and non-opioid strategies; coordinate with the opioid prescriber.${oplan === 'bup' ? ' The buprenorphine in this plan can address both pain and OUD.' : ''}`, { status: 'cond' });
+    if (f.pain && !snri) line('Co-occurring', 'Chronic pain', ['Duloxetine'], `<b>Duloxetine</b> and non-opioid strategies; coordinate with the opioid prescriber.${oplan === 'bup' ? ' The buprenorphine in this plan can address both pain and OUD.' : ''}`, { status: 'cond' });
 
-    /* 8 ─ Symptom relief shared across substances */
+    /* 9 ─ Symptom relief shared across substances */
     if (f.anxiety || sub.bzd || sub.stim || sub.can || sub.oud) line('Symptom relief', 'Anxiety / restlessness', ['Hydroxyzine'], '<b>Hydroxyzine</b> as needed — not habit-forming.', { status: 'prn', alts: f.anxiety || sub.bzd ? [{ med: 'Buspirone', text: 'scheduled option for ongoing anxiety.' }] : [] });
     if (f.insomnia || sub.stim || sub.can || sub.bzd) line('Symptom relief', 'Sleep', ['Trazodone'], `${f.insomnia ? 'Sleep hygiene / CBT-I first; then ' : ''}<b>trazodone</b> at bedtime as needed.`, { status: 'prn', alts: [{ med: 'Mirtazapine', text: 'if appetite is also low.' }].concat(sub.bzd ? [{ med: 'Melatonin', text: 'mild option.' }] : []) });
     if (sub.aud || sub.can || sub.bzd) line('Symptom relief', 'Withdrawal symptoms, sleep, anxiety (off-label)', ['Gabapentin'], `<b>Gabapentin</b> adjunct.${opioid ? ' <b>Misuse risk with opioid use</b> — monitor closely.' : ''}${renalAny ? ' Renal dose adjustment required.' : ''}`, { status: opioid || renalAny ? 'cond' : 'prn' });
@@ -346,7 +376,7 @@
         <label class="wf-sub-top"><input type="checkbox" data-g="subs" data-k="${s.id}" ${on ? 'checked' : ''}><span class="wf-dot" style="background:${c}"></span><span class="wf-sub-name">${s.label}</span></label>
         ${on ? `<div class="wf-sub-extra">
           <label class="wf-inline">Hours since last use <input type="number" min="0" max="2000" inputmode="numeric" class="wf-num" data-hrs="${s.id}" value="${S.hrs[s.id] ?? ''}" placeholder="—"></label>
-          ${s.id === 'oud' ? `${check('root', 'fentanyl', 'Fentanyl / high-potency synthetic opioids')}${check('root', 'methadoneUse', 'Methadone (prescribed or illicit)')}` : ''}
+          ${s.id === 'oud' ? `<div class="wf-mini wf-muted">Opioid types used:</div>${check('root', 'fentanyl', 'Fentanyl / high-potency synthetic opioids')}${check('root', 'pills', 'Prescription opioid pills (e.g., Norco, Vicodin)')}${check('root', 'methadoneUse', 'Methadone (prescribed or illicit)')}${check('root', 'kratom', 'Kratom')}${check('root', 'sevenOH', 'High-potency kratom derivatives (e.g., 7-OH)')}` : ''}
         </div>` : ''}
       </div>`;
     }).join('');
@@ -454,6 +484,7 @@
     L.push('MEDICATION TREATMENT PLAN (TAMG Clinical Workflow)');
     L.push('Generated: ' + new Date().toLocaleString());
     L.push('Substances: ' + (chosen().map((s) => s.label + (S.hrs[s.id] ? ` (last use ~${S.hrs[s.id]} h)` : '')).join('; ') || 'none selected'));
+    if (S.subs.oud) { const ox = [S.fentanyl && 'fentanyl', S.pills && 'prescription pills', S.methadoneUse && 'methadone', S.kratom && 'kratom', S.sevenOH && '7-OH'].filter(Boolean); if (ox.length) L.push('Opioid types: ' + ox.join(', ')); }
     L.push('Current MOUD: ' + ({ none: 'none', bup: 'buprenorphine', methadone: 'methadone', xrntx: 'XR-naltrexone' })[S.moud] + ' | Pregnancy: ' + ({ na: 'N/A', no: 'negative', yes: 'PREGNANT', unk: 'unknown — test pending' })[S.preg] + (S.older ? ' | Age ≥65' : ''));
     const c = ciwaInfo(), w = cowsInfo();
     if (S.subs.aud && c) L.push(`CIWA-Ar: ${c.total}/67 (${ciwaBand(c.total)[0]})${c.done < c.n ? ` — ${c.done}/${c.n} items` : ''}`);
