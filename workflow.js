@@ -19,7 +19,7 @@
     { id: 'can', label: 'Cannabis', pw: 'can' }
   ];
   const RULESET = 'Rule set v1.2 (draft) — consolidated single plan; pending medical director approval';
-  const STEPS = ['Intake', 'Safety & history', 'Withdrawal scores', 'Treatment plan'];
+  const STEPS = ['Intake', 'Safety & history', 'Treatment plan'];
   const LAST = STEPS.length - 1;
 
   /* ── Instruments ── */
@@ -100,7 +100,7 @@
   /* ── State (in memory only) ── */
   const fresh = () => ({
     step: 0, subs: {}, hrs: {}, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
-    preg: 'na', older: false, emerg: {}, review: {}, ciwa: {}, cows: {}, f: {}
+    preg: 'na', older: false, emerg: {}, review: {}, f: {}
   });
   let S = fresh();
 
@@ -122,9 +122,8 @@
      One patient-level plan. Each medication is decided once, using every
      substance and clinical factor together, so the plan can never recommend
      a drug in one place and advise against it in another. */
-  function ciwaInfo() { const r = sumScale(S.ciwa, CIWA); return r.done ? r : null; }
-  function cowsInfo() { const r = sumScale(S.cows, COWS); return r.done ? r : null; }
 
+  const calc = (tab, label) => `<button class="wf-link" data-tab-go="${tab}">${label} →</button>`;
   const GROUPS = ['Withdrawal', 'Maintenance', 'Co-occurring', 'Symptom relief', 'Safety & nutrition'];
 
   function buildPlan() {
@@ -133,7 +132,6 @@
     const no = (m, why) => { if (!avoid.has(m)) avoid.set(m, []); if (!avoid.get(m).includes(why)) avoid.get(m).push(why); };
     const act = (lvl, text) => actions.push({ lvl, text });
     const line = (group, purpose, meds, text, o) => lines.push({ group, purpose, meds, text, status: (o && o.status) || 'start', alts: (o && o.alts) || [] });
-    const c = ciwaInfo(), w = cowsInfo();
     const hepatic = f.liver || S.older;
     const renalAny = f.renal || f.renalSevere;
     const szRisk = [f.szDisorder || S.review.hxsz ? 'seizure history' : '', f.eating ? 'eating disorder' : '', sub.aud || sub.bzd ? 'alcohol/sedative withdrawal' : ''].filter(Boolean);
@@ -159,14 +157,11 @@
           ? `<b>Continue XR-naltrexone</b> monthly injections if effective.${both}`
           : `<b>Continue current ${oplan === 'bup' ? 'buprenorphine' : 'methadone'}.</b> Verify last dose with the prescriber${oplan === 'methadone' ? ' / OTP (guest dosing if needed)' : ''} and avoid any interruption.${oplan === 'methadone' && f.cardiac ? ' <b>Cardiac:</b> QTc risk — ECG.' : ''}`, { status: 'continue' });
       } else if (oplan === 'bup') {
-        const low = S.fentanyl || S.methadoneUse, t = w ? w.total : null, hrs = S.hrs.oud;
+        const low = S.fentanyl || S.methadoneUse, hrs = S.hrs.oud;
         const waitH = S.methadoneUse ? '36–72' : S.fentanyl ? '24–72' : '12–24';
         let txt, st = 'start';
         if (low) txt = `<b>Start buprenorphine by low-dose (Bernese/micro) induction.</b> ${S.fentanyl ? 'Fentanyl' : 'Methadone'} exposure raises the risk of precipitated withdrawal with standard induction; low-dose induction overlaps with full agonist and does not require waiting for withdrawal.`;
-        else if (t === null) { st = 'cond'; txt = `<b>Start buprenorphine (standard induction)</b> once objective withdrawal is present (typically COWS ≥8–12) and ~${waitH} h since last use. Score COWS first.`; }
-        else if (t >= 12) txt = `<b>Start buprenorphine — standard induction threshold met</b> (COWS ${t}${hrs ? `, ${hrs} h since last use` : ''}).`;
-        else if (t >= 8) { st = 'cond'; txt = `<b>Buprenorphine — approaching induction threshold</b> (COWS ${t}). Many protocols begin at ≥8; others wait for ≥12. Reassess in 1–2 h.`; }
-        else { st = 'cond'; txt = `<b>Buprenorphine — not yet</b> for standard induction (COWS ${t}). Reassess, or use low-dose induction.`; }
+        else { st = 'cond'; txt = `<b>Start buprenorphine (standard induction)</b> once objective withdrawal is present — COWS ≥8–12 (many protocols begin at ≥8; others wait for ≥12) — and ~${waitH} h since last use${hrs ? ` (currently ${hrs} h)` : ''}. ${calc('cows', 'Score with the COWS calculator')}`; }
         if (preg) txt += ' Buprenorphine or methadone are both recommended in pregnancy.';
         line('Maintenance', 'Opioid use disorder', ['Buprenorphine'], txt, { status: st, alts: [{ med: 'Methadone', text: `if buprenorphine fails or tolerance is very high; requires OTP enrollment${f.cardiac ? '; QTc risk — ECG' : ''}.` }] });
       } else if (oplan === 'methadone') {
@@ -177,9 +172,8 @@
       }
       if (sub.oud && !(current && agonist)) {
         line('Withdrawal', 'Opioid withdrawal symptoms', ['Clonidine', 'Ondansetron', 'Loperamide', 'Dicyclomine'], 'As needed: clonidine (hold for low BP/HR), ondansetron, loperamide, dicyclomine, NSAIDs/acetaminophen.', { status: 'prn' });
-        if (!w) act('alert', '<b>Score COWS</b> (Step 3) to guide induction timing and symptom management.');
+        act('alert', `<b>Score COWS</b> at admission and before induction; >24 → notify prescriber, assess hydration and level of care. ${calc('cows', 'COWS calculator')}`);
       }
-      if (sub.oud && w) { const b = cowsBand(w.total); act(b[1] === 'ok' ? 'go' : b[1] === 'warn' ? 'caution' : 'avoid', `<b>COWS ${w.total} — ${b[0].toLowerCase()}${w.done < w.n ? ` (partial — ${w.done}/${w.n} items)` : ''}.</b>${w.total > 24 ? ' Notify prescriber; assess hydration and level of care.' : ''}`); }
       line('Safety & nutrition', 'Overdose prevention', ['Naloxone'], '<b>Naloxone kit</b> at discharge (and for family). Counsel on loss of tolerance after a residential stay.');
       if (sub.oud && S.pills) act('caution', '<b>Prescription opioid pills (e.g., Norco, Vicodin):</b> check the PDMP and coordinate with any current prescriber. Pills from non-pharmacy sources may be counterfeit and contain fentanyl — if so, also check the fentanyl box (switches to low-dose induction).');
       if (sub.oud && S.kratom) act('caution', `<b>Kratom:</b> partial opioid agonist — withdrawal is usually milder and COWS still applies. ${S.fentanyl || S.pills || S.methadoneUse || S.sevenOH ? 'Treat the opioid use disorder as a whole.' : 'For mild use, symptomatic withdrawal care may be enough; buprenorphine for moderate–severe kratom use disorder (evidence from case series).'} Check LFTs (kratom-associated liver injury) and ask about high-dose use (seizure reports) and adulterated products.`);
@@ -192,12 +186,12 @@
     if (sub.aud || sub.bzd) {
       const agent = hepatic ? 'Lorazepam' : 'Diazepam';
       const why = hepatic ? ` Lorazepam chosen (${f.liver ? 'liver disease' : 'age ≥65'}): no active metabolites, while long-acting agents can accumulate — monitor sedation and falls.` : ' Diazepam (long-acting) gives a smoother, self-tapering course.';
-      const ciwaTxt = !c ? 'score CIWA-Ar to guide dosing' : c.total < 10 ? `CIWA-Ar ${c.total} — minimal: medication generally not indicated unless high-risk history; reassess per protocol` : c.total < 19 ? `CIWA-Ar ${c.total} — mild–moderate: symptom-triggered dosing per facility protocol, reassess after each dose` : `CIWA-Ar ${c.total} — severe: notify prescriber now`;
+      const ciwaTxt = 'dose by CIWA-Ar per facility protocol: <10 — medication generally not indicated unless high-risk history; 10–18 — symptom-triggered dosing, reassess after each dose; ≥19 — notify prescriber';
       const taper = 'reduce by 10% of the current dose at each change, every 2–4 weeks; hold or extend the interval if withdrawal emerges. Never stop abruptly.';
       const hx = S.review.hxsz ? ' <b>Seizure/DT history:</b> prescriber may prefer scheduled or front-loaded dosing.' : '';
       let purpose, txt, st = 'start';
       if (sub.aud && sub.bzd) { purpose = 'Alcohol withdrawal + benzodiazepine taper'; txt = `<b>One ${agent.toLowerCase()} regimen for both.</b> Treat alcohol withdrawal first (${ciwaTxt}), then continue the same agent as a supervised taper: ${taper}`; }
-      else if (sub.aud) { purpose = 'Alcohol withdrawal'; txt = `<b>${agent}</b> — ${ciwaTxt}.`; if (!c || c.total < 10) st = 'cond'; }
+      else if (sub.aud) { purpose = 'Alcohol withdrawal'; txt = `<b>${agent}</b> — ${ciwaTxt}.`; st = 'cond'; }
       else { purpose = 'Benzodiazepine taper'; txt = `<b>Convert to ${agent.toLowerCase()}</b> using an equivalence table (e.g., Ashton), verified by the prescriber. Goal: ${taper}`; }
       const alts = [];
       if (sub.bzd && !hepatic) alts.push({ med: 'Clonazepam', text: 'alternative taper agent.' });
@@ -205,8 +199,8 @@
       if (sub.bzd) ['Carbamazepine', 'Valproate'].forEach((m) => alts.push({ med: m, text: 'taper adjunct per prescriber.' }));
       if (sub.bzd) alts.push({ med: 'Propranolol', text: 'for somatic symptoms during the taper.' });
       line('Withdrawal', purpose, [agent], txt + why + hx, { status: st, alts });
-      if (sub.aud && !c) act('alert', '<b>Score CIWA-Ar</b> (Step 3) to guide withdrawal management.');
-      if (c && sub.aud && c.total >= 19) act('avoid', `<b>CIWA-Ar ${c.total} — severe alcohol withdrawal:</b> notify prescriber now; evaluate need for a higher level of care.`);
+      if (sub.aud) act('alert', `<b>Score CIWA-Ar</b> at admission and per protocol; ≥19 → notify prescriber now and evaluate need for a higher level of care. ${calc('ciwa', 'CIWA-Ar calculator')}`);
+      if (sub.bzd) act('info', '<b>Benzodiazepine taper is dose-driven, not score-driven:</b> document agent, daily dose, duration of use and any withdrawal seizure history.');
     }
     if (sub.aud) line('Safety & nutrition', 'Wernicke prevention', ['Thiamine', 'Folate'], '<b>Thiamine for every patient, before any glucose.</b> Add folate and a multivitamin. Watch for confusion, ataxia and eye-movement abnormalities.');
     if (sub.stim || sub.bzd || f.anxiety || f.insomnia) no('Benzodiazepines / Z-drugs for sleep or anxiety', 'dependence risk — use the non-benzodiazepine options in this plan' + (sub.aud || sub.bzd ? ' (the withdrawal/taper regimen above is the only benzodiazepine)' : ''));
@@ -319,8 +313,6 @@
     if (reasons.length) return { lvl: 'bad', label: 'Emergency escalation', text: 'Call 911 / transfer to emergency department per facility policy. Do not continue the admission workflow until stabilized.', reasons };
     const r = [];
     REVIEW.forEach(([k, l]) => { if (S.review[k]) r.push(l); });
-    const c = S.subs.aud ? ciwaInfo() : null; if (c && c.total >= 19) r.push(`CIWA-Ar ${c.total} (severe)`);
-    const w = S.subs.oud ? cowsInfo() : null; if (w && w.total >= 25) r.push(`COWS ${w.total} (moderately severe or worse)`);
     if (S.preg === 'yes') r.push('Pregnancy');
     if (S.subs.aud && S.subs.bzd) r.push('Combined alcohol + sedative withdrawal');
     if (S.older) r.push('Age ≥65');
@@ -400,28 +392,31 @@
     return `<div class="wf-acuity wf-acuity-${a.lvl}"><div class="wf-acuity-label">${a.label}</div><div class="wf-acuity-text">${a.text}</div>${a.reasons.length ? `<ul>${a.reasons.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}</div>`;
   }
 
-  function scaleCIWA() {
-    const r = sumScale(S.ciwa, CIWA), b = ciwaBand(r.total);
-    const rows = CIWA.map((it) => {
-      const v = S.ciwa[it.id];
-      const btns = Array.from({ length: it.max + 1 }, (_, n) => `<button class="wf-sc ${v === n ? 'on' : ''} ${it.a[n] ? 'anch' : ''}" data-scale="ciwa" data-item="${it.id}" data-v="${n}" title="${esc(it.a[n] || '')}">${n}</button>`).join('');
+  /* ── Score calculators (separate tabs; not used by the workflow) ── */
+  const SC = { ciwa: {}, cows: {} };
+  const SCALES = {
+    ciwa: { items: CIWA, max: 67, band: ciwaBand, label: 'CIWA-Ar', col: COL.aud, title: 'CIWA-Ar — Alcohol withdrawal',
+      sub: 'Clinical Institute Withdrawal Assessment for Alcohol, revised. 10 items, maximum 67. Tap a score for each item; bold numbers are the instrument anchors (hover or tap to see the wording).',
+      bands: [['0–9', 'Minimal', 'Supportive care; medication generally not indicated unless high-risk history. Reassess per protocol.'], ['10–18', 'Mild–moderate', 'Symptom-triggered benzodiazepine per facility protocol; reassess after each dose.'], ['≥19', 'Severe', 'Notify prescriber now; evaluate need for a higher level of care.']] },
+    cows: { items: COWS, max: 48, band: cowsBand, label: 'COWS', col: COL.oud, title: 'COWS — Opioid withdrawal',
+      sub: 'Clinical Opiate Withdrawal Scale. 11 items, maximum 48. Score observed signs; take the resting pulse after the patient has been seated for 1 minute.',
+      bands: [['0–4', 'No active withdrawal', 'Too early for standard buprenorphine induction.'], ['5–12', 'Mild', 'Standard induction often begins at ≥8; other protocols wait for ≥12.'], ['13–24', 'Moderate', 'Standard buprenorphine induction threshold met in most protocols.'], ['25–36', 'Moderately severe', 'Notify prescriber; assess hydration and level of care.'], ['>36', 'Severe', 'Notify prescriber; assess hydration and level of care.']] }
+  };
+
+  function scaleRows(kind) {
+    const obj = SC[kind];
+    if (kind === 'ciwa') return CIWA.map((it) => {
+      const v = obj[it.id];
+      const btns = Array.from({ length: it.max + 1 }, (_, n) => `<button class="wf-sc ${v === n ? 'on' : ''} ${it.a[n] ? 'anch' : ''}" data-item="${it.id}" data-v="${n}" title="${esc(it.a[n] || '')}">${n}</button>`).join('');
       let desc = '';
-      if (v !== undefined) { const keys = Object.keys(it.a).map(Number).filter((k) => k <= v); desc = it.a[v] || (it.a[Math.max(...keys)] ? `Between “${it.a[Math.max(...keys)]}” and next anchor` : ''); }
+      if (v !== undefined) { const keys = Object.keys(it.a).map(Number).filter((k) => k <= v); desc = it.a[v] || `Between “${it.a[Math.max(...keys)]}” and the next anchor`; }
       return `<div class="wf-item"><div class="wf-item-name">${it.name} <span class="wf-max">0–${it.max}</span></div><div class="wf-scs">${btns}</div><div class="wf-desc">${esc(desc)}</div></div>`;
     }).join('');
-    return `<div class="wf-card" style="border-top:3px solid ${COL.aud}"><div class="wf-scale-head"><div><div class="wf-h">CIWA-Ar — Alcohol withdrawal</div><div class="wf-hint">Max 67. Bold numbers are instrument anchors; hover for wording.</div></div>${scoreBadge(r, b, 67)}</div>${rows}
-      <div class="wf-bands"><span><b>&lt;10</b> minimal</span><span><b>10–18</b> mild–moderate</span><span><b>≥19</b> severe</span><span class="wf-muted">Use your facility's protocol thresholds.</span></div></div>`;
-  }
-
-  function scaleCOWS() {
-    const r = sumScale(S.cows, COWS), b = cowsBand(r.total);
-    const rows = COWS.map((it) => {
-      const v = S.cows[it.id];
-      const btns = it.v.map(([n, l]) => `<button class="wf-sc wide ${v === n ? 'on' : ''}" data-scale="cows" data-item="${it.id}" data-v="${n}"><b>${n}</b> ${esc(l)}</button>`).join('');
+    return COWS.map((it) => {
+      const v = obj[it.id];
+      const btns = it.v.map(([n, l]) => `<button class="wf-sc wide ${v === n ? 'on' : ''}" data-item="${it.id}" data-v="${n}"><b>${n}</b> ${esc(l)}</button>`).join('');
       return `<div class="wf-item"><div class="wf-item-name">${it.name}</div><div class="wf-scs wrap">${btns}</div></div>`;
     }).join('');
-    return `<div class="wf-card" style="border-top:3px solid ${COL.oud}"><div class="wf-scale-head"><div><div class="wf-h">COWS — Opioid withdrawal</div><div class="wf-hint">Max 48. Score observed signs; resting pulse after 1 minute seated.</div></div>${scoreBadge(r, b, 48)}</div>${rows}
-      <div class="wf-bands"><span><b>5–12</b> mild</span><span><b>13–24</b> moderate</span><span><b>25–36</b> mod. severe</span><span><b>&gt;36</b> severe</span></div></div>`;
   }
 
   function scoreBadge(r, b, max) {
@@ -429,19 +424,38 @@
     return `<div class="wf-score wf-score-${cls}"><div class="wf-score-n">${r.done ? r.total : '—'}<span>/${max}</span></div><div class="wf-score-l">${r.done ? b[0] : 'Not scored'}</div><div class="wf-score-p">${r.done}/${r.n} items</div></div>`;
   }
 
-  function vStep2() {
-    const parts = [];
-    if (S.subs.aud) parts.push(scaleCIWA());
-    if (S.subs.oud) {
-      const agonist = S.moud === 'bup' || S.moud === 'methadone';
-      if (!agonist || S.forceCows) parts.push(scaleCOWS());
-      else parts.push(`<div class="wf-card"><div class="wf-h">COWS</div><div class="wf-hint">Patient is on agonist MOUD — score COWS only if withdrawal is suspected.</div><button class="wf-btn ghost" data-force-cows="1">Score COWS anyway</button></div>`);
-    }
-    if (S.subs.bzd) parts.push(`<div class="wf-card" style="border-top:3px solid ${COL.bzd}"><div class="wf-h">Benzodiazepine / sedative withdrawal</div><div class="wf-hint">Management is taper-driven rather than score-driven. Document daily dose, agent, duration of use and any withdrawal seizure history.${S.subs.aud ? ' CIWA-Ar above is also used to monitor the combined regimen.' : ''}</div></div>`);
-    if (S.subs.stim) parts.push(`<div class="wf-card" style="border-top:3px solid ${COL.stim}"><div class="wf-h">Stimulant crash monitoring</div><div class="wf-hint">No validated withdrawal scale. Track sleep, appetite, mood and <b>daily suicide-risk screening</b>; watch for paranoia or psychosis.</div></div>`);
-    if (S.subs.can) parts.push(`<div class="wf-card" style="border-top:3px solid ${COL.can}"><div class="wf-h">Cannabis withdrawal</div><div class="wf-hint">No routine scale needed. Track irritability, sleep, appetite and cyclic vomiting (possible hyperemesis syndrome).</div></div>`);
-    if (!parts.length) parts.push('<div class="wf-card"><div class="wf-hint">Select at least one substance in Intake.</div></div>');
-    return parts.join('');
+  function scoreText(kind) {
+    const K = SCALES[kind], r = sumScale(SC[kind], K.items);
+    const L = [`${K.label}: ${r.total}/${K.max} (${K.band(r.total)[0]})${r.done < r.n ? ` — partial, ${r.done}/${r.n} items scored` : ''}`, 'Scored: ' + new Date().toLocaleString()];
+    K.items.forEach((it) => { if (SC[kind][it.id] !== undefined) L.push(`  ${it.name}: ${SC[kind][it.id]}`); });
+    return L.join('\n');
+  }
+
+  function renderScale(kind, keepScroll) {
+    const root = document.getElementById('scRoot-' + kind);
+    if (!root) return;
+    const y = window.scrollY;
+    const K = SCALES[kind], r = sumScale(SC[kind], K.items), b = K.band(r.total);
+    root.innerHTML = `<div class="pw-header"><div class="pw-title">${K.title}</div><div class="pw-sub">${K.sub}</div></div>
+      <div class="wf-card" style="border-top:3px solid ${K.col}"><div class="wf-scale-head"><div><div class="wf-h">${K.label} calculator</div><div class="wf-hint">${r.done < r.n ? `${r.n - r.done} of ${r.n} items left to score.` : 'All items scored.'}</div></div>${scoreBadge(r, b, K.max)}</div>${scaleRows(kind)}</div>
+      <div class="wf-card"><div class="wf-h">Interpretation</div><div class="sc-bands">${K.bands.map(([rng, lab, txt]) => `<div class="sc-band ${r.done && lab === b[0] ? 'on' : ''}"><b>${rng}</b><span class="sc-lab">${lab}</span><span class="sc-txt">${txt}</span></div>`).join('')}</div><div class="wf-hint" style="margin:.6rem 0 0">Use your facility's protocol thresholds.</div></div>
+      <div class="wf-actions"><button class="wf-btn" data-sc-copy="1" ${r.done ? '' : 'disabled'}>Copy score</button><button class="wf-btn ghost danger" data-sc-reset="1">Clear</button></div>
+      <div class="pw-note" style="margin-top:1.5rem">Nothing entered is saved; scores clear on reload. Record the score in the chart — the Clinical Workflow does not read it.</div>`;
+    if (keepScroll) window.scrollTo(0, y);
+  }
+
+  function copyText(text, btn, label) {
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => { btn.textContent = label; }, 1600); };
+    const fallback = () => { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done(); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+  }
+
+  function onScaleClick(kind, e) {
+    const t = e.target.closest('button');
+    if (!t) return;
+    if (t.dataset.item) { const o = SC[kind], k = t.dataset.item, v = +t.dataset.v; if (o[k] === v) delete o[k]; else o[k] = v; renderScale(kind, true); return; }
+    if (t.dataset.scCopy) { copyText(scoreText(kind), t, 'Copy score'); return; }
+    if (t.dataset.scReset) { SC[kind] = {}; renderScale(kind); }
   }
 
   /* ── Treatment plan view ── */
@@ -486,9 +500,6 @@
     L.push('Substances: ' + (chosen().map((s) => s.label + (S.hrs[s.id] ? ` (last use ~${S.hrs[s.id]} h)` : '')).join('; ') || 'none selected'));
     if (S.subs.oud) { const ox = [S.fentanyl && 'fentanyl', S.pills && 'prescription pills', S.methadoneUse && 'methadone', S.kratom && 'kratom', S.sevenOH && '7-OH'].filter(Boolean); if (ox.length) L.push('Opioid types: ' + ox.join(', ')); }
     L.push('Current MOUD: ' + ({ none: 'none', bup: 'buprenorphine', methadone: 'methadone', xrntx: 'XR-naltrexone' })[S.moud] + ' | Pregnancy: ' + ({ na: 'N/A', no: 'negative', yes: 'PREGNANT', unk: 'unknown — test pending' })[S.preg] + (S.older ? ' | Age ≥65' : ''));
-    const c = ciwaInfo(), w = cowsInfo();
-    if (S.subs.aud && c) L.push(`CIWA-Ar: ${c.total}/67 (${ciwaBand(c.total)[0]})${c.done < c.n ? ` — ${c.done}/${c.n} items` : ''}`);
-    if (S.subs.oud && w) L.push(`COWS: ${w.total}/48 (${cowsBand(w.total)[0]})${w.done < w.n ? ` — ${w.done}/${w.n} items` : ''}`);
     L.push('');
     L.push('ACUITY: ' + a.label.toUpperCase());
     a.reasons.forEach((r) => L.push('  - ' + r));
@@ -513,7 +524,7 @@
     return L.join('\n');
   }
 
-  const VIEWS = [vStep0, vStep1, vStep2, vPlan];
+  const VIEWS = [vStep0, vStep1, vPlan];
 
   function render(keepScroll) {
     const root = document.getElementById('wfRoot');
@@ -522,7 +533,7 @@
     const a = acuity();
     const stop = a.lvl === 'bad' && S.step > 1;
     root.innerHTML = `
-      <div class="pw-header"><div class="pw-title">Clinical Decision Workflow</div><div class="pw-sub">Admission assessment → withdrawal scoring → medication treatment plan for residential SUD treatment.</div></div>
+      <div class="pw-header"><div class="pw-title">Clinical Decision Workflow</div><div class="pw-sub">Admission assessment → medication treatment plan for residential SUD treatment. Withdrawal scores are in the CIWA-Ar and COWS tabs.</div></div>
       ${stepper()}
       ${a.lvl !== 'ok' && S.step !== 1 && S.step !== LAST ? `<div class="wf-strip wf-acuity-${a.lvl}"><b>${a.label}</b> — ${a.reasons.length} trigger${a.reasons.length !== 1 ? 's' : ''}. <button class="wf-link" data-go="1">Review</button></div>` : ''}
       <div class="wf-view">${stop ? acuityBanner(a) : VIEWS[S.step]()}</div>
@@ -546,22 +557,10 @@
       S.step = n; render(); document.getElementById('wfRoot').scrollIntoView({ block: 'start' }); return;
     }
     if (t.dataset.set) { S[t.dataset.set] = t.dataset.val; render(true); return; }
-    if (t.dataset.scale) {
-      const obj = S[t.dataset.scale], k = t.dataset.item, v = +t.dataset.v;
-      if (obj[k] === v) delete obj[k]; else obj[k] = v;
-      render(true); return;
-    }
-    if (t.dataset.forceCows) { S.forceCows = true; render(true); return; }
+    if (t.dataset.tabGo) { switchTab(t.dataset.tabGo); window.scrollTo({ top: 0 }); return; }
     if (t.classList.contains('wf-medlink')) { openMed(t.dataset.med); return; }
     if (t.dataset.pw) { openPathway(t.dataset.pw); return; }
-    if (t.id === 'wfCopy') {
-      const text = planText();
-      const done = () => { t.textContent = 'Copied ✓'; setTimeout(() => { t.textContent = 'Copy plan'; }, 1600); };
-      const fallback = () => { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done(); };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
-      else fallback();
-      return;
-    }
+    if (t.id === 'wfCopy') { copyText(planText(), t, 'Copy plan'); return; }
     if (t.id === 'wfPrint') { document.body.classList.add('wf-printing'); try { window.print(); } catch (err) { /* printing blocked in sandboxed previews */ } setTimeout(() => document.body.classList.remove('wf-printing'), 500); return; }
     if (t.id === 'wfReset') {
       if (t.dataset.armed) { S = fresh(); render(); return; }
@@ -678,6 +677,11 @@
   .wf-sc.wide b{font-family:'IBM Plex Mono',monospace;margin-right:.3rem}
   .wf-desc{font-size:11.5px;color:var(--text-dim);margin-top:.3rem;min-height:1em}
   .wf-bands{display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-dim)}
+  .sc-bands{display:flex;flex-direction:column;gap:.35rem;margin-top:.5rem}
+  .sc-band{display:grid;grid-template-columns:64px 150px 1fr;gap:.3rem .75rem;align-items:baseline;padding:.5rem .65rem;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text-dim)}
+  .sc-band b{font-family:'IBM Plex Mono',monospace;color:var(--text)}
+  .sc-lab{color:var(--text);font-weight:500}
+  .sc-band.on{border-color:var(--accent);background:var(--surface2);box-shadow:inset 3px 0 0 var(--accent)}
   .wf-path-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
   .wf-link{background:none;border:none;color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;padding:.2rem 0}
   .wf-link:hover{text-decoration:underline}
@@ -716,7 +720,7 @@
   .wf-btn.ghost:hover{color:var(--text);border-color:var(--text-muted)}
   .wf-btn.danger:hover{color:#ef5350;border-color:#ef5350}
   .tab-bar{overflow-x:auto;scrollbar-width:none}.tab-bar::-webkit-scrollbar{display:none}
-  @media(max-width:700px){.tab-btn{padding:.6rem .8rem}.wf-row2{grid-template-columns:1fr}.wf-step-l{display:none}.wf-step.cur .wf-step-l{display:inline}.wf-scs{flex-wrap:wrap}.wf-sc{min-width:38px;height:36px}.wf-score{min-width:90px}.wf-checks.cols{grid-template-columns:1fr}}
+  @media(max-width:700px){.tab-btn{padding:.6rem .8rem}.wf-row2{grid-template-columns:1fr}.wf-step-l{display:none}.wf-step.cur .wf-step-l{display:inline}.wf-scs{flex-wrap:wrap}.wf-sc{min-width:38px;height:36px}.wf-score{min-width:90px}.wf-checks.cols{grid-template-columns:1fr}.sc-band{grid-template-columns:56px 1fr}.sc-txt{grid-column:1/-1}}
   @media print{body.wf-printing .site-header,body.wf-printing .wf-steps,body.wf-printing .wf-nav,body.wf-printing .wf-actions,body.wf-printing .wf-hint,body.wf-printing .wf-strip,body.wf-printing .wf-pwlinks,body.wf-printing .tab-panel:not(#tab-workflow),body.wf-printing .pw-header,body.wf-printing .footer{display:none!important}
     body.wf-printing,body.wf-printing #wfRoot,body.wf-printing .wf-card,body.wf-printing .wf-acuity{background:#fff!important}
     body.wf-printing #wfRoot *{color:#000!important}
@@ -731,36 +735,47 @@
     const bar = document.querySelector('.tab-bar');
     const page = document.querySelector('.page');
     if (!bar || !page) return;
-    const btn = document.createElement('button');
-    btn.className = 'tab-btn'; btn.dataset.tab = 'workflow'; btn.textContent = '🧭 Clinical Workflow';
-    bar.appendChild(btn);
-
-    const panel = document.createElement('div');
-    panel.className = 'tab-panel'; panel.id = 'tab-workflow';
-    panel.innerHTML = '<div id="wfRoot"></div>';
-    // Insert after the last existing tab panel.
+    const TABS = [
+      { id: 'workflow', label: '🧭 Clinical Workflow', html: '<div id="wfRoot"></div>' },
+      { id: 'ciwa', label: '🧮 CIWA-Ar', html: '<div id="scRoot-ciwa"></div>' },
+      { id: 'cows', label: '🧮 COWS', html: '<div id="scRoot-cows"></div>' }
+    ];
     const panels = page.querySelectorAll(':scope > .tab-panel');
-    const last = panels[panels.length - 1];
-    if (last && last.nextSibling) page.insertBefore(panel, last.nextSibling); else page.appendChild(panel);
-
-    // Same switching behaviour as the existing tabs (the site's handlers were bound before this button existed).
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
-      btn.classList.add('active'); panel.classList.add('active');
-      if (history.replaceState) history.replaceState(null, '', '#workflow');
+    let after = panels[panels.length - 1];
+    const mine = TABS.map((T) => {
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn'; btn.dataset.tab = T.id; btn.textContent = T.label;
+      bar.appendChild(btn);
+      const panel = document.createElement('div');
+      panel.className = 'tab-panel'; panel.id = 'tab-' + T.id; panel.innerHTML = T.html;
+      if (after && after.nextSibling) page.insertBefore(panel, after.nextSibling); else page.appendChild(panel);
+      after = panel;
+      // Same switching behaviour as the existing tabs (the site's handlers were bound before these buttons existed).
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
+        btn.classList.add('active'); panel.classList.add('active');
+        if (history.replaceState) history.replaceState(null, '', '#' + T.id);
+      });
+      return { T, btn, panel };
     });
-    // When another tab is clicked, the existing handler won't know about our panel — hide it.
+    // When one of the site's own tabs is clicked, its handler won't know about these panels — hide them.
     bar.addEventListener('click', (e) => {
       const b = e.target.closest('.tab-btn');
-      if (b && b !== btn) { panel.classList.remove('active'); btn.classList.remove('active'); if (location.hash === '#workflow' && history.replaceState) history.replaceState(null, '', location.pathname); }
+      if (!b || mine.some((m) => m.btn === b)) return;
+      mine.forEach((m) => { m.panel.classList.remove('active'); m.btn.classList.remove('active'); });
+      if (mine.some((m) => location.hash === '#' + m.T.id) && history.replaceState) history.replaceState(null, '', location.pathname);
     });
 
-    panel.addEventListener('click', onClick);
-    panel.addEventListener('change', onChange);
-    panel.addEventListener('input', onInput);
-    render();
-    if (location.hash === '#workflow') btn.click();
+    const wf = mine[0].panel;
+    wf.addEventListener('click', onClick);
+    wf.addEventListener('change', onChange);
+    wf.addEventListener('input', onInput);
+    mine[1].panel.addEventListener('click', (e) => onScaleClick('ciwa', e));
+    mine[2].panel.addEventListener('click', (e) => onScaleClick('cows', e));
+    render(); renderScale('ciwa'); renderScale('cows');
+    const start = mine.find((m) => location.hash === '#' + m.T.id);
+    if (start) start.btn.click();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();

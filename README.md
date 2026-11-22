@@ -5,7 +5,7 @@ Clinical reference for residential SUD treatment, deployed on Netlify at https:/
 ## Files
 
 - `index.html` — Medication Reference and Treatment Pathways (single-file site).
-- `workflow.js` — Clinical Workflow tab (drop-in module). Loaded by `index.html` with:
+- `workflow.js` — Clinical Workflow, CIWA-Ar and COWS tabs (drop-in module). Loaded by `index.html` with:
 
   ```html
   <script src="workflow.js"></script>
@@ -17,7 +17,7 @@ Clinical reference for residential SUD treatment, deployed on Netlify at https:/
 
 Opioid types at intake: fentanyl, prescription pills (e.g., Norco, Vicodin), methadone, kratom, and high-potency kratom derivatives (e.g., 7-OH). Each adds its own guidance (fentanyl or methadone → low-dose buprenorphine induction; pills → PDMP and counterfeit-fentanyl check; kratom → LFTs and severity-based approach; 7-OH → manage as full-agonist OUD).
 
-Four steps: Intake → Safety & history (safety screen + clinical factors) → Withdrawal scores (CIWA-Ar, COWS) → **Treatment plan**.
+Three steps: Intake → Safety & history (safety screen + clinical factors) → **Treatment plan**. Withdrawal scores are not part of the workflow; the plan states the CIWA-Ar / COWS thresholds and links to the calculators.
 
 The treatment plan is **one plan for the whole patient**, not one per substance. Each medication is decided once, using every substance and clinical factor together, in this order:
 
@@ -40,6 +40,10 @@ A final consistency pass guarantees that a drug on the Avoid list never appears 
 - Rule-based decision support only; no doses are given.
 - Nothing entered is stored or transmitted; state lives in memory and clears on reload.
 - Medication names link into the Medication Reference tab; the "Full pathways" links open the matching Treatment Pathway.
+
+## CIWA-Ar and COWS calculators
+
+Separate tabs (`#ciwa`, `#cows`) for scoring withdrawal at any time. Tap a score per item; the running total, severity band and the matching interpretation row update live and stay visible while scrolling. **Copy score** copies the total, band, time and item-by-item breakdown for the chart. Scores are kept in memory only and are not read by the Clinical Workflow.
 
 ### Rule set
 
