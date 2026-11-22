@@ -99,7 +99,7 @@
 
   /* ── State (in memory only) ── */
   const fresh = () => ({
-    step: 0, subs: {}, drinks: null, bz: {}, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
+    step: 0, subs: {}, drinks: null, bz: {}, st: {}, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
     preg: 'na', older: false, emerg: {}, review: {}, f: {}
   });
   let S = fresh();
@@ -116,6 +116,8 @@
     ['pressed', 'Pressed or counterfeit pills (e.g., street “Xanax bars”)']
   ];
   const bzChosen = () => BZ_TYPES.filter(([k]) => S.bz[k]);
+  const ST_TYPES = [['cocPowder', 'Cocaine (powder)'], ['cocRock', 'Cocaine (rock)'], ['meth', 'Methamphetamine']];
+  const stChosen = () => ST_TYPES.filter(([k]) => S.st[k]);
 
   /* ── Standard drink reference (NIAAA; US standard drink = 14 g pure alcohol) ── */
   const DRINK_REF = `<div class="wf-drinkref">
@@ -283,15 +285,18 @@
 
     /* 6 ─ Stimulants */
     if (sub.stim) {
-      act('info', '<b>Stimulants: no FDA-approved medication.</b> Contingency management has the strongest evidence; add CBT and community reinforcement. Mirtazapine (methamphetamine) and topiramate/modafinil (cocaine) have limited, mixed evidence.');
+      const meth = S.st.meth, coc = S.st.cocPowder || S.st.cocRock, cocOnly = coc && !meth;
+      const ltd = [(meth || !coc) && 'mirtazapine (methamphetamine)', (coc || !meth) && 'topiramate/modafinil (cocaine)'].filter(Boolean).join(' and ');
+      act('info', `<b>Stimulants: no FDA-approved medication.</b> Contingency management has the strongest evidence; add CBT and community reinforcement. ${ltd.charAt(0).toUpperCase() + ltd.slice(1)} ${meth && !coc ? 'has' : 'have'} limited, mixed evidence.`);
       act('caution', '<b>Stimulant crash (days 1–10):</b> hypersomnia, hyperphagia, dysphoria — screen for suicidal ideation daily.');
       if (f.cardiac) act('alert', '<b>Cardiac disease with stimulant use:</b> ECG and medical follow-up.');
       if (!stimCovered && !avoid.has('Bupropion')) {
         const ntxInPlan = lines.some((l) => l.meds.includes('Naltrexone'));
         const adhd = adhdViaStim ? ' <b>Also treats ADHD</b> (methylphenidate excluded — see Avoid).' : '';
+        const ev = cocOnly ? ' Evidence for cocaine use is limited.' : '';
         const o = { status: 'cond', alts: adhdViaStim ? [{ med: 'Atomoxetine', text: 'non-stimulant option for ADHD.' }] : [] };
-        if (ntxInPlan) line('Maintenance', 'Stimulant use (off-label)', ['Bupropion'], '<b>Bupropion</b>, combined with the naltrexone already in this plan — the combination has trial evidence for methamphetamine use.' + adhd, o);
-        else if (!avoid.has('Naltrexone')) line('Maintenance', 'Stimulant use (off-label)', ['Bupropion', 'Naltrexone'], `<b>Bupropion + injectable naltrexone</b> — the combination has trial evidence for methamphetamine use.${f.liver ? ' Check LFTs.' : ''}${adhd}`, o);
+        if (ntxInPlan) line('Maintenance', 'Stimulant use (off-label)', ['Bupropion'], '<b>Bupropion</b>, combined with the naltrexone already in this plan — the combination has trial evidence for methamphetamine use.' + ev + adhd, o);
+        else if (!avoid.has('Naltrexone')) line('Maintenance', 'Stimulant use (off-label)', ['Bupropion', 'Naltrexone'], `<b>Bupropion + injectable naltrexone</b> — the combination has trial evidence for methamphetamine use.${ev}${f.liver ? ' Check LFTs.' : ''}${adhd}`, o);
         else line('Maintenance', 'Stimulant use (off-label)', ['Bupropion'], '<b>Bupropion alone</b> may be considered; the naltrexone combination is not possible with this opioid plan.' + adhd, o);
       }
     }
@@ -400,12 +405,13 @@
       const on = !!S.subs[s.id], c = COL[s.id];
       return `<div class="wf-sub ${on ? 'on' : ''}" style="${on ? `border-color:${c};background:${c}14` : ''}">
         <label class="wf-sub-top"><input type="checkbox" data-g="subs" data-k="${s.id}" ${on ? 'checked' : ''}><span class="wf-dot" style="background:${c}"></span><span class="wf-sub-name">${s.label}</span></label>
-        ${on && (s.id === 'aud' || s.id === 'oud' || s.id === 'bzd') ? `<div class="wf-sub-extra">
+        ${on && (s.id === 'aud' || s.id === 'oud' || s.id === 'bzd' || s.id === 'stim') ? `<div class="wf-sub-extra">
           ${s.id === 'aud'
             ? `<label class="wf-inline">Standard drinks per day <input type="number" min="0" max="200" step="any" inputmode="decimal" class="wf-num" data-drinks="1" value="${S.drinks ?? ''}" placeholder="—"></label>${DRINK_REF}`
             : ''}
           ${s.id === 'oud' ? `<div class="wf-mini wf-muted">Opioid types used:</div>${check('root', 'fentanyl', 'Fentanyl / high-potency synthetic opioids')}${check('root', 'pills', 'Prescription opioid pills (e.g., Norco, Vicodin)')}${check('root', 'methadoneUse', 'Methadone (prescribed or illicit)')}${check('root', 'kratom', 'Kratom')}${check('root', 'sevenOH', 'High-potency kratom derivatives (e.g., 7-OH)')}` : ''}
           ${s.id === 'bzd' ? `<div class="wf-mini wf-muted">Benzodiazepine types used:</div>${BZ_TYPES.map(([k, l]) => check('bz', k, l)).join('')}` : ''}
+          ${s.id === 'stim' ? `<div class="wf-mini wf-muted">Stimulant types used:</div>${ST_TYPES.map(([k, l]) => check('st', k, l)).join('')}` : ''}
         </div>` : ''}
       </div>`;
     }).join('');
@@ -663,6 +669,7 @@
     L.push('Substances: ' + (chosen().map((s) => s.label + (s.id === 'aud' && S.drinks != null ? ` (~${S.drinks} standard drinks/day)` : '')).join('; ') || 'none selected'));
     if (S.subs.oud) { const ox = [S.fentanyl && 'fentanyl', S.pills && 'prescription pills', S.methadoneUse && 'methadone', S.kratom && 'kratom', S.sevenOH && '7-OH'].filter(Boolean); if (ox.length) L.push('Opioid types: ' + ox.join(', ')); }
     if (S.subs.bzd && bzChosen().length) L.push('Benzodiazepine types: ' + bzChosen().map(([, l]) => l).join('; '));
+    if (S.subs.stim && stChosen().length) L.push('Stimulant types: ' + stChosen().map(([, l]) => l).join('; '));
     L.push('Current MOUD: ' + ({ none: 'none', bup: 'buprenorphine', methadone: 'methadone', xrntx: 'XR-naltrexone' })[S.moud] + ' | Pregnancy: ' + ({ na: 'N/A', no: 'negative', yes: 'PREGNANT', unk: 'unknown — test pending' })[S.preg] + (S.older ? ' | Age ≥65' : ''));
     L.push('');
     L.push('ACUITY: ' + a.label.toUpperCase());
@@ -740,6 +747,7 @@
       if (g === 'root') S[k] = t.checked; else S[g][k] = t.checked;
       if (g === 'subs' && !t.checked && k === 'aud') S.drinks = null;
       if (g === 'subs' && !t.checked && k === 'bzd') S.bz = {};
+      if (g === 'subs' && !t.checked && k === 'stim') S.st = {};
       if (k === 'renalSevere' && t.checked) S.f.renal = false;
       if (k === 'renal' && t.checked) S.f.renalSevere = false;
       render(true);
