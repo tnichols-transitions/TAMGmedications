@@ -18,7 +18,7 @@
     { id: 'bzd', label: 'Benzodiazepines / sedatives', pw: 'bzd' },
     { id: 'can', label: 'Cannabis', pw: 'can' }
   ];
-  const RULESET = 'Rule set v1.2 — approved by medical director';
+  const RULESET = 'Rule set v1.3 (draft) — pending medical director approval';
   const STEPS = ['Intake', 'Safety & history', 'Treatment plan'];
   const LAST = STEPS.length - 1;
 
@@ -99,10 +99,23 @@
 
   /* ── State (in memory only) ── */
   const fresh = () => ({
-    step: 0, subs: {}, drinks: null, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
+    step: 0, subs: {}, drinks: null, bz: {}, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
     preg: 'na', older: false, emerg: {}, review: {}, f: {}
   });
   let S = fresh();
+
+  /* ── Benzodiazepine types (intake) ── */
+  const BZ_TYPES = [
+    ['alprazolam', 'Alprazolam (Xanax)'],
+    ['lorazepam', 'Lorazepam (Ativan)'],
+    ['clonazepam', 'Clonazepam (Klonopin)'],
+    ['diazepam', 'Diazepam (Valium)'],
+    ['temazepam', 'Temazepam (Restoril)'],
+    ['zdrug', 'Z-drugs (zolpidem/Ambien, eszopiclone/Lunesta)'],
+    ['designer', 'Research-chemical / designer benzodiazepines (e.g., flubromazolam, bromazolam, etizolam)'],
+    ['pressed', 'Pressed or counterfeit pills (e.g., street “Xanax bars”)']
+  ];
+  const bzChosen = () => BZ_TYPES.filter(([k]) => S.bz[k]);
 
   /* ── Standard drink reference (NIAAA; US standard drink = 14 g pure alcohol) ── */
   const DRINK_REF = `<div class="wf-drinkref">
@@ -211,9 +224,17 @@
       if (sub.bzd) ['Carbamazepine', 'Valproate'].forEach((m) => alts.push({ med: m, text: 'taper adjunct per prescriber.' }));
       if (sub.bzd) alts.push({ med: 'Propranolol', text: 'for somatic symptoms during the taper.' });
       const intake = sub.aud && S.drinks != null ? ` Reported intake: ~${S.drinks} standard drinks/day.` : '';
-      line('Withdrawal', purpose, [agent], txt + why + hx + intake, { status: st, alts });
+      const bzt = sub.bzd ? bzChosen() : [];
+      const using = bzt.length ? ` Currently using: ${bzt.map(([, l]) => l.replace(/ \(.*$/, '').toLowerCase()).join(', ')}.` : '';
+      const designerTxt = sub.bzd && S.bz.designer ? ' <b>Designer benzodiazepines cannot be converted with the equivalence table</b> — the prescriber doses the taper agent by observed withdrawal.' : '';
+      line('Withdrawal', purpose, [agent], txt + why + hx + intake + using + designerTxt, { status: st, alts });
       if (sub.aud) act('alert', `<b>Score CIWA-Ar</b> at admission and per protocol; ≥19 → notify prescriber now and evaluate need for a higher level of care. ${calc('ciwa', 'CIWA-Ar calculator')}`);
       if (sub.bzd) act('info', '<b>Benzodiazepine taper is dose-driven, not score-driven:</b> document agent, daily dose, duration of use and any withdrawal seizure history.');
+    }
+    if (sub.bzd && S.bz.designer) act('alert', '<b>Designer benzodiazepines (e.g., flubromazolam):</b> potency is unknown and often very high, some have very long half-lives, and no reliable dose equivalence exists. Monitor closely for seizures and delayed withdrawal; consider a higher level of care.');
+    if (sub.bzd && (S.bz.designer || S.bz.pressed)) {
+      act('caution', '<b>Street, counterfeit and designer benzodiazepines are often contaminated with fentanyl or other opioids:</b> urine drug screen; offer fentanyl test strips.');
+      if (!opioid) line('Safety & nutrition', 'Overdose prevention', ['Naloxone'], '<b>Naloxone kit</b> at discharge (and for family) — street benzodiazepines are often contaminated with fentanyl.');
     }
     if (sub.aud) line('Safety & nutrition', 'Wernicke prevention', ['Thiamine', 'Folate'], '<b>Thiamine for every patient, before any glucose.</b> Add folate and a multivitamin. Watch for confusion, ataxia and eye-movement abnormalities.');
     if (sub.stim || sub.bzd || f.anxiety || f.insomnia) no('Benzodiazepines / Z-drugs for sleep or anxiety', 'dependence risk — use the non-benzodiazepine options in this plan' + (sub.aud || sub.bzd ? ' (the withdrawal/taper regimen above is the only benzodiazepine)' : ''));
@@ -379,11 +400,12 @@
       const on = !!S.subs[s.id], c = COL[s.id];
       return `<div class="wf-sub ${on ? 'on' : ''}" style="${on ? `border-color:${c};background:${c}14` : ''}">
         <label class="wf-sub-top"><input type="checkbox" data-g="subs" data-k="${s.id}" ${on ? 'checked' : ''}><span class="wf-dot" style="background:${c}"></span><span class="wf-sub-name">${s.label}</span></label>
-        ${on && (s.id === 'aud' || s.id === 'oud') ? `<div class="wf-sub-extra">
+        ${on && (s.id === 'aud' || s.id === 'oud' || s.id === 'bzd') ? `<div class="wf-sub-extra">
           ${s.id === 'aud'
             ? `<label class="wf-inline">Standard drinks per day <input type="number" min="0" max="200" step="any" inputmode="decimal" class="wf-num" data-drinks="1" value="${S.drinks ?? ''}" placeholder="—"></label>${DRINK_REF}`
             : ''}
           ${s.id === 'oud' ? `<div class="wf-mini wf-muted">Opioid types used:</div>${check('root', 'fentanyl', 'Fentanyl / high-potency synthetic opioids')}${check('root', 'pills', 'Prescription opioid pills (e.g., Norco, Vicodin)')}${check('root', 'methadoneUse', 'Methadone (prescribed or illicit)')}${check('root', 'kratom', 'Kratom')}${check('root', 'sevenOH', 'High-potency kratom derivatives (e.g., 7-OH)')}` : ''}
+          ${s.id === 'bzd' ? `<div class="wf-mini wf-muted">Benzodiazepine types used:</div>${BZ_TYPES.map(([k, l]) => check('bz', k, l)).join('')}` : ''}
         </div>` : ''}
       </div>`;
     }).join('');
@@ -568,7 +590,7 @@
       <button class="cv-x" data-cv-del="${i}" title="Remove" ${st.rows.length === 1 ? 'disabled' : ''}>✕</button></div>`).join('');
     const notes = kind === 'opioid'
       ? ['MME factors estimate total opioid exposure and overdose risk; they are approximate for switching between opioids.', 'Buprenorphine is not converted to MME (partial agonist). Kratom and 7-OH have no validated conversion.', 'Fentanyl patch: enter mcg/hr. All other opioids: total mg per day.']
-      : ['Equivalents are approximate and intended for long-term users; acute or elderly patients may need less.', 'Z-drugs (zolpidem, zaleplon) are included because they are cross-tolerant with benzodiazepines.', 'Where the source gives a range (estazolam, flurazepam) the result is shown as a range.'];
+      : ['Equivalents are approximate and intended for long-term users; acute or elderly patients may need less.', 'Z-drugs (zolpidem, zaleplon) are included because they are cross-tolerant with benzodiazepines.', 'Designer benzodiazepines (flubromazolam, bromazolam, etizolam) and counterfeit pills have no reliable equivalence and are not included.', 'Where the source gives a range (estazolam, flurazepam) the result is shown as a range.'];
     root.innerHTML = `<div class="pw-header"><div class="pw-title">${K.title}</div><div class="pw-sub">${K.sub}</div></div>
       <div class="wf-card"><div class="wf-h">Current ${kind === 'opioid' ? 'opioids' : 'benzodiazepines'}</div>${rows}
         <button class="wf-btn ghost" data-cv-add="1">+ Add another</button>
@@ -640,6 +662,7 @@
     L.push('Generated: ' + new Date().toLocaleString());
     L.push('Substances: ' + (chosen().map((s) => s.label + (s.id === 'aud' && S.drinks != null ? ` (~${S.drinks} standard drinks/day)` : '')).join('; ') || 'none selected'));
     if (S.subs.oud) { const ox = [S.fentanyl && 'fentanyl', S.pills && 'prescription pills', S.methadoneUse && 'methadone', S.kratom && 'kratom', S.sevenOH && '7-OH'].filter(Boolean); if (ox.length) L.push('Opioid types: ' + ox.join(', ')); }
+    if (S.subs.bzd && bzChosen().length) L.push('Benzodiazepine types: ' + bzChosen().map(([, l]) => l).join('; '));
     L.push('Current MOUD: ' + ({ none: 'none', bup: 'buprenorphine', methadone: 'methadone', xrntx: 'XR-naltrexone' })[S.moud] + ' | Pregnancy: ' + ({ na: 'N/A', no: 'negative', yes: 'PREGNANT', unk: 'unknown — test pending' })[S.preg] + (S.older ? ' | Age ≥65' : ''));
     L.push('');
     L.push('ACUITY: ' + a.label.toUpperCase());
@@ -716,6 +739,7 @@
       const g = t.dataset.g, k = t.dataset.k;
       if (g === 'root') S[k] = t.checked; else S[g][k] = t.checked;
       if (g === 'subs' && !t.checked && k === 'aud') S.drinks = null;
+      if (g === 'subs' && !t.checked && k === 'bzd') S.bz = {};
       if (k === 'renalSevere' && t.checked) S.f.renal = false;
       if (k === 'renal' && t.checked) S.f.renalSevere = false;
       render(true);

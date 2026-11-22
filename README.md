@@ -60,7 +60,11 @@ Conversion tables live in the `OPIOIDS` and `BZDS` constants in `workflow.js`.
 
 ### Rule set
 
-Current: **v1.2 — approved by medical director.** The version string is the `RULESET` constant near the top of `workflow.js` and prints on every plan. Bump it whenever a clinical rule changes.
+Current: **v1.3 (draft) — pending medical director approval.**
+
+v1.3 changes: benzodiazepine types at intake (alprazolam/Xanax, lorazepam/Ativan, clonazepam/Klonopin, diazepam/Valium, temazepam/Restoril, Z-drugs, designer benzodiazepines such as flubromazolam, pressed/counterfeit pills). Designer agents: no conversion — the taper agent is dosed by observed withdrawal, with a seizure-monitoring / level-of-care alert. Designer or counterfeit pills: fentanyl-contamination caution (urine drug screen, test strips) and a naloxone kit even without opioid use. Intake also records standard drinks per day for alcohol (documentation only) and no longer asks hours since last use.
+
+v1.2: approved by medical director. The version string is the `RULESET` constant near the top of `workflow.js` and prints on every plan. Bump it whenever a clinical rule changes.
 
 v1.2 changes: replaces the per-substance recommendation lists with one patient-level plan as described above; adds overlap rules (including long-acting methylphenidate for ADHD + stimulant use, and duloxetine for depression/anxiety + chronic pain); adds prescription opioid pills, kratom and 7-OH as opioid types. Other clinical content carries over from v1.1.
 
