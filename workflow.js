@@ -898,13 +898,19 @@
       if (after && after.nextSibling) page.insertBefore(panel, after.nextSibling); else page.appendChild(panel);
       after = panel;
       // Same switching behaviour as the existing tabs (the site's handlers were bound before these buttons existed).
-      btn.addEventListener('click', () => {
+      const show = (setHash) => {
         document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
         document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
         btn.classList.add('active'); panel.classList.add('active');
-        if (history.replaceState) history.replaceState(null, '', '#' + T.id);
-      });
-      return { T, btn, panel };
+        if (setHash && history.replaceState) history.replaceState(null, '', '#' + T.id);
+      };
+      btn.addEventListener('click', () => show(true));
+      return { T, btn, panel, show };
+    });
+    // Tab order, left to right.
+    ['workflow', 'pathways', 'meds', 'opioid-conv', 'benzo-conv', 'cows', 'ciwa'].forEach((id) => {
+      const b = bar.querySelector(`.tab-btn[data-tab="${id}"]`);
+      if (b) bar.appendChild(b);
     });
     // When one of the site's own tabs is clicked, its handler won't know about these panels — hide them.
     bar.addEventListener('click', (e) => {
@@ -926,8 +932,9 @@
       pnl.addEventListener('change', (e) => onConvEdit(k, e));
     });
     render(); renderScale('ciwa'); renderScale('cows'); renderConv('opioid'); renderConv('bzd');
-    const start = mine.find((m) => location.hash === '#' + m.T.id);
-    if (start) start.btn.click();
+    // Open the tab named in the URL, otherwise the Clinical Workflow (leftmost).
+    const start = mine.find((m) => location.hash === '#' + m.T.id) || mine[0];
+    start.show(start !== mine[0] || location.hash === '#workflow');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();

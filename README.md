@@ -13,6 +13,10 @@ Clinical reference for residential SUD treatment, deployed on Netlify at https:/
 
   placed just before `</body>`, after the page's own inline script.
 
+## Tab order
+
+Left to right: Clinical Workflow · Treatment Pathways · Medication Reference · Opioid conversion · Benzo conversion · COWS · CIWA-Ar. The Clinical Workflow opens by default; links ending in `#workflow`, `#opioid-conv`, `#benzo-conv`, `#cows`, `#ciwa` open that tab directly. The order is set in `mount()` in `workflow.js`.
+
 ## Clinical Workflow
 
 Opioid types at intake: fentanyl, prescription pills (e.g., Norco, Vicodin), methadone, kratom, and high-potency kratom derivatives (e.g., 7-OH). Each adds its own guidance (fentanyl or methadone → low-dose buprenorphine induction; pills → PDMP and counterfeit-fentanyl check; kratom → LFTs and severity-based approach; 7-OH → manage as full-agonist OUD).
