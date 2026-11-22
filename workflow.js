@@ -201,7 +201,6 @@
         line('Withdrawal', 'Opioid withdrawal symptoms', ['Clonidine', 'Ondansetron', 'Loperamide', 'Dicyclomine'], 'As needed: clonidine (hold for low BP/HR), ondansetron, loperamide, dicyclomine, NSAIDs/acetaminophen.', { status: 'prn' });
         act('alert', `<b>Score COWS</b> at admission and before induction; >24 → notify prescriber, assess hydration and level of care. ${calc('cows', 'COWS calculator')}`);
       }
-      line('Safety & nutrition', 'Overdose prevention', ['Naloxone'], '<b>Naloxone kit</b> at discharge (and for family). Counsel on loss of tolerance after a residential stay.');
       if (sub.oud && S.pills) act('caution', '<b>Prescription opioid pills (e.g., Norco, Vicodin):</b> check the PDMP and coordinate with any current prescriber. Pills from non-pharmacy sources may be counterfeit and contain fentanyl — if so, also check the fentanyl box (switches to low-dose induction).');
       if (sub.oud && S.kratom) act('caution', `<b>Kratom:</b> partial opioid agonist — withdrawal is usually milder and COWS still applies. ${S.fentanyl || S.pills || S.methadoneUse || S.sevenOH ? 'Treat the opioid use disorder as a whole.' : 'For mild use, symptomatic withdrawal care may be enough; buprenorphine for moderate–severe kratom use disorder (evidence from case series).'} Check LFTs (kratom-associated liver injury) and ask about high-dose use (seizure reports) and adulterated products.`);
       if (sub.oud && S.sevenOH) act('alert', '<b>High-potency kratom derivatives (7-OH):</b> potent full mu-agonist effects — manage as opioid use disorder; withdrawal can be as severe as with other opioids. Evidence on induction approach is limited — prescriber to decide timing; consider low-dose induction with heavy daily use.');
@@ -235,9 +234,15 @@
     }
     if (sub.bzd && S.bz.designer) act('alert', '<b>Designer benzodiazepines (e.g., flubromazolam):</b> potency is unknown and often very high, some have very long half-lives, and no reliable dose equivalence exists. Monitor closely for seizures and delayed withdrawal; consider a higher level of care.');
     if (sub.bzd && (S.bz.designer || S.bz.pressed)) {
-      act('caution', '<b>Street, counterfeit and designer benzodiazepines are often contaminated with fentanyl or other opioids:</b> urine drug screen; offer fentanyl test strips.');
-      if (!opioid) line('Safety & nutrition', 'Overdose prevention', ['Naloxone'], '<b>Naloxone kit</b> at discharge (and for family) — street benzodiazepines are often contaminated with fentanyl.');
+      act('caution', '<b>Street, counterfeit and designer benzodiazepines are often contaminated with fentanyl or other opioids:</b> urine drug screen.');
     }
+    /* Overdose prevention — one rule for everyone using illicit substances (or on MOUD) */
+    const illicit = [
+      opioid && 'opioid use',
+      sub.stim && 'illicit stimulants are often contaminated with fentanyl',
+      sub.bzd && (S.bz.designer || S.bz.pressed) && 'street/counterfeit benzodiazepines are often contaminated with fentanyl'
+    ].filter(Boolean);
+    if (illicit.length) line('Safety & nutrition', 'Overdose prevention', ['Naloxone'], `<b>Naloxone kit and fentanyl test strips</b> in the discharge plan (and naloxone for family) — ${illicit.join('; ')}. Teach overdose recognition and response.${opioid ? ' Counsel on loss of opioid tolerance after a residential stay.' : ''}`);
     if (sub.aud) line('Safety & nutrition', 'Wernicke prevention', ['Thiamine', 'Folate'], '<b>Thiamine for every patient, before any glucose.</b> Add folate and a multivitamin. Watch for confusion, ataxia and eye-movement abnormalities.');
     if (sub.stim || sub.bzd || f.anxiety || f.insomnia) no('Benzodiazepines / Z-drugs for sleep or anxiety', 'dependence risk — use the non-benzodiazepine options in this plan' + (sub.aud || sub.bzd ? ' (the withdrawal/taper regimen above is the only benzodiazepine)' : ''));
 
