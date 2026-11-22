@@ -99,7 +99,7 @@
 
   /* ── State (in memory only) ── */
   const fresh = () => ({
-    step: 0, subs: {}, hrs: {}, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
+    step: 0, subs: {}, hrs: {}, drinks: null, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
     preg: 'na', older: false, emerg: {}, review: {}, f: {}
   });
   let S = fresh();
@@ -198,7 +198,8 @@
       if (sub.aud) alts.push({ med: 'Phenobarbital', text: 'for benzodiazepine-resistant withdrawal, typically in more closely monitored settings.' });
       if (sub.bzd) ['Carbamazepine', 'Valproate'].forEach((m) => alts.push({ med: m, text: 'taper adjunct per prescriber.' }));
       if (sub.bzd) alts.push({ med: 'Propranolol', text: 'for somatic symptoms during the taper.' });
-      line('Withdrawal', purpose, [agent], txt + why + hx, { status: st, alts });
+      const intake = sub.aud && S.drinks != null ? ` Reported intake: ~${S.drinks} standard drinks/day.` : '';
+      line('Withdrawal', purpose, [agent], txt + why + hx + intake, { status: st, alts });
       if (sub.aud) act('alert', `<b>Score CIWA-Ar</b> at admission and per protocol; ≥19 → notify prescriber now and evaluate need for a higher level of care. ${calc('ciwa', 'CIWA-Ar calculator')}`);
       if (sub.bzd) act('info', '<b>Benzodiazepine taper is dose-driven, not score-driven:</b> document agent, daily dose, duration of use and any withdrawal seizure history.');
     }
@@ -367,7 +368,9 @@
       return `<div class="wf-sub ${on ? 'on' : ''}" style="${on ? `border-color:${c};background:${c}14` : ''}">
         <label class="wf-sub-top"><input type="checkbox" data-g="subs" data-k="${s.id}" ${on ? 'checked' : ''}><span class="wf-dot" style="background:${c}"></span><span class="wf-sub-name">${s.label}</span></label>
         ${on ? `<div class="wf-sub-extra">
-          <label class="wf-inline">Hours since last use <input type="number" min="0" max="2000" inputmode="numeric" class="wf-num" data-hrs="${s.id}" value="${S.hrs[s.id] ?? ''}" placeholder="—"></label>
+          ${s.id === 'aud'
+            ? `<label class="wf-inline">Standard drinks per day <input type="number" min="0" max="200" step="any" inputmode="decimal" class="wf-num" data-drinks="1" value="${S.drinks ?? ''}" placeholder="—"></label>`
+            : `<label class="wf-inline">Hours since last use <input type="number" min="0" max="2000" inputmode="numeric" class="wf-num" data-hrs="${s.id}" value="${S.hrs[s.id] ?? ''}" placeholder="—"></label>`}
           ${s.id === 'oud' ? `<div class="wf-mini wf-muted">Opioid types used:</div>${check('root', 'fentanyl', 'Fentanyl / high-potency synthetic opioids')}${check('root', 'pills', 'Prescription opioid pills (e.g., Norco, Vicodin)')}${check('root', 'methadoneUse', 'Methadone (prescribed or illicit)')}${check('root', 'kratom', 'Kratom')}${check('root', 'sevenOH', 'High-potency kratom derivatives (e.g., 7-OH)')}` : ''}
         </div>` : ''}
       </div>`;
@@ -623,7 +626,7 @@
     const a = acuity(), L = [];
     L.push('MEDICATION TREATMENT PLAN (TAMG Clinical Workflow)');
     L.push('Generated: ' + new Date().toLocaleString());
-    L.push('Substances: ' + (chosen().map((s) => s.label + (S.hrs[s.id] ? ` (last use ~${S.hrs[s.id]} h)` : '')).join('; ') || 'none selected'));
+    L.push('Substances: ' + (chosen().map((s) => s.label + (s.id === 'aud' ? (S.drinks != null ? ` (~${S.drinks} standard drinks/day)` : '') : S.hrs[s.id] ? ` (last use ~${S.hrs[s.id]} h)` : '')).join('; ') || 'none selected'));
     if (S.subs.oud) { const ox = [S.fentanyl && 'fentanyl', S.pills && 'prescription pills', S.methadoneUse && 'methadone', S.kratom && 'kratom', S.sevenOH && '7-OH'].filter(Boolean); if (ox.length) L.push('Opioid types: ' + ox.join(', ')); }
     L.push('Current MOUD: ' + ({ none: 'none', bup: 'buprenorphine', methadone: 'methadone', xrntx: 'XR-naltrexone' })[S.moud] + ' | Pregnancy: ' + ({ na: 'N/A', no: 'negative', yes: 'PREGNANT', unk: 'unknown — test pending' })[S.preg] + (S.older ? ' | Age ≥65' : ''));
     L.push('');
@@ -700,7 +703,7 @@
     if (t.matches('input[type=checkbox][data-g]')) {
       const g = t.dataset.g, k = t.dataset.k;
       if (g === 'root') S[k] = t.checked; else S[g][k] = t.checked;
-      if (g === 'subs' && !t.checked) delete S.hrs[k];
+      if (g === 'subs' && !t.checked) { delete S.hrs[k]; if (k === 'aud') S.drinks = null; }
       if (k === 'renalSevere' && t.checked) S.f.renal = false;
       if (k === 'renal' && t.checked) S.f.renalSevere = false;
       render(true);
@@ -708,6 +711,7 @@
   }
   function onInput(e) {
     const t = e.target;
+    if (t.matches('input[data-drinks]')) { const v = t.value.trim(); S.drinks = v === '' || !(+v >= 0) ? null : Math.round(+v * 10) / 10; }
     if (t.matches('input[data-hrs]')) { const v = t.value.trim(); if (v === '') delete S.hrs[t.dataset.hrs]; else S.hrs[t.dataset.hrs] = Math.max(0, Math.round(+v)); }
   }
 
