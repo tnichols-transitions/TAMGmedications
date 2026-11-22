@@ -10,15 +10,17 @@
   'use strict';
 
   /* ── Palette (matches PATHWAY_COLORS in the main site) ── */
-  const COL = { aud: '#ffb74d', oud: '#81c995', stim: '#ce93d8', bzd: '#4fc3f7', can: '#a5d6a7' };
+  const COL = { aud: '#ffb74d', oud: '#81c995', stim: '#ce93d8', bzd: '#4fc3f7', can: '#a5d6a7', inh: '#ffab91', hal: '#80deea' };
   const SUBS = [
     { id: 'aud', label: 'Alcohol', pw: 'aud' },
     { id: 'oud', label: 'Opioids', pw: 'oud' },
     { id: 'stim', label: 'Stimulants', pw: 'stim' },
     { id: 'bzd', label: 'Benzodiazepines / sedatives', pw: 'bzd' },
-    { id: 'can', label: 'Cannabis', pw: 'can' }
+    { id: 'can', label: 'Cannabis', pw: 'can' },
+    { id: 'inh', label: 'Inhalants', pw: null },
+    { id: 'hal', label: 'Hallucinogens / empathogens', pw: null }
   ];
-  const RULESET = 'Rule set v1.3 — approved by medical director';
+  const RULESET = 'Rule set v1.4 (draft) — pending medical director approval';
   const STEPS = ['Intake', 'Safety & history', 'Treatment plan'];
   const LAST = STEPS.length - 1;
 
@@ -99,7 +101,7 @@
 
   /* ── State (in memory only) ── */
   const fresh = () => ({
-    step: 0, subs: {}, drinks: null, bz: {}, st: {}, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
+    step: 0, subs: {}, drinks: null, bz: {}, st: {}, inh: {}, hal: {}, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
     preg: 'na', older: false, emerg: {}, review: {}, f: {}
   });
   let S = fresh();
@@ -116,6 +118,9 @@
     ['pressed', 'Pressed or counterfeit pills (e.g., street “Xanax bars”)']
   ];
   const bzChosen = () => BZ_TYPES.filter(([k]) => S.bz[k]);
+  const INH_TYPES = [['n2o', 'Nitrous oxide (whippets)'], ['solvent', 'Solvents, aerosols or fuels (e.g., paint, glue, computer duster, gasoline)'], ['nitrite', 'Alkyl nitrites (poppers)']];
+  const HAL_TYPES = [['psilocybin', 'Psilocybin (mushrooms)'], ['lsd', 'LSD'], ['mdma', 'MDMA (ecstasy, molly)'], ['ketamine', 'Ketamine'], ['halOther', 'Other (e.g., DMT, mescaline/peyote)']];
+  const typesOf = (list, key) => list.filter(([k]) => S[key][k]);
   const ST_TYPES = [['cocPowder', 'Cocaine (powder)'], ['cocRock', 'Cocaine (rock)'], ['meth', 'Methamphetamine']];
   const stChosen = () => ST_TYPES.filter(([k]) => S.st[k]);
 
@@ -240,7 +245,8 @@
     const illicit = [
       opioid && 'opioid use',
       sub.stim && 'illicit stimulants are often contaminated with fentanyl',
-      sub.bzd && (S.bz.designer || S.bz.pressed) && 'street/counterfeit benzodiazepines are often contaminated with fentanyl'
+      sub.bzd && (S.bz.designer || S.bz.pressed) && 'street/counterfeit benzodiazepines are often contaminated with fentanyl',
+      sub.hal && 'illicit hallucinogens, MDMA and ketamine can be contaminated with fentanyl'
     ].filter(Boolean);
     if (illicit.length) line('Safety & nutrition', 'Overdose prevention', ['Naloxone'], `<b>Naloxone kit and fentanyl test strips</b> in the discharge plan (and naloxone for family) — ${illicit.join('; ')}. Teach overdose recognition and response.${opioid ? ' Counsel on loss of opioid tolerance after a residential stay.' : ''}`);
     if (sub.aud) line('Safety & nutrition', 'Wernicke prevention', ['Thiamine', 'Folate'], '<b>Thiamine for every patient, before any glucose.</b> Add folate and a multivitamin. Watch for confusion, ataxia and eye-movement abnormalities.');
@@ -310,6 +316,23 @@
     if (sub.can) {
       act('info', '<b>Cannabis withdrawal:</b> irritability, insomnia, reduced appetite, cravings — peaks days 2–6, mostly resolves in 1–2 weeks. Psychosocial core: MET, CBT, contingency management.');
       line('Symptom relief', 'Cannabinoid hyperemesis (if cyclic vomiting)', ['Capsaicin'], 'Topical capsaicin; haloperidol/droperidol in ED settings. Abstinence is the definitive treatment.', { status: 'prn' });
+    }
+
+    /* 7b ─ Inhalants */
+    if (sub.inh) {
+      act('info', '<b>Inhalants: no FDA-approved medication.</b> Psychosocial treatment (CBT, contingency management, family involvement). Withdrawal is usually mild — irritability, insomnia, cravings.');
+      const it = S.inh;
+      if (!it.n2o && !it.solvent && !it.nitrite) act('alert', '<b>Identify the inhalant:</b> nitrous oxide needs vitamin B12 checks; solvents/aerosols need an ECG.');
+      if (it.n2o) line('Safety & nutrition', 'Nitrous oxide — vitamin B12', ['Vitamin B12'], '<b>Vitamin B12</b> — nitrous oxide inactivates B12 and can cause myeloneuropathy (numbness, tingling, unsteady gait). Check B12, methylmalonic acid and homocysteine and do a neurologic exam; replace B12 per prescriber (intramuscular if neurologic symptoms).', { status: 'cond' });
+      if (it.solvent) act('alert', '<b>Solvents / aerosols:</b> risk of sudden cardiac death (arrhythmia) — ECG. Check LFTs, renal function and electrolytes (toluene can cause renal tubular acidosis and low potassium); cognitive and neurologic screen.');
+      if (it.nitrite) act('caution', '<b>Alkyl nitrites (poppers):</b> risk of methemoglobinemia and severe hypotension — never combine with sildenafil or tadalafil; ask about vision changes (maculopathy).');
+    }
+
+    /* 7c ─ Hallucinogens / empathogens */
+    if (sub.hal) {
+      act('info', '<b>Hallucinogens / empathogens: no FDA-approved medication</b> and usually no physical withdrawal. Psychosocial treatment; screen for persisting perceptual changes (HPPD), anxiety, mood symptoms and lingering psychosis (antipsychotic per prescriber if it persists).');
+      if (S.hal.mdma) act('caution', '<b>MDMA:</b> combined with serotonergic medications (SSRIs, SNRIs, trazodone, mirtazapine, MAOIs) it raises serotonin-syndrome risk — counsel the patient if use may continue. Low mood after use is common; check sodium after recent heavy use.');
+      if (S.hal.ketamine) act('caution', '<b>Ketamine:</b> ask about urinary symptoms (ketamine cystitis) — urinalysis and urology referral if present. Cravings and dependence can be significant.');
     }
 
     /* 8 ─ Co-occurring conditions — one medication per need */
@@ -410,13 +433,15 @@
       const on = !!S.subs[s.id], c = COL[s.id];
       return `<div class="wf-sub ${on ? 'on' : ''}" style="${on ? `border-color:${c};background:${c}14` : ''}">
         <label class="wf-sub-top"><input type="checkbox" data-g="subs" data-k="${s.id}" ${on ? 'checked' : ''}><span class="wf-dot" style="background:${c}"></span><span class="wf-sub-name">${s.label}</span></label>
-        ${on && (s.id === 'aud' || s.id === 'oud' || s.id === 'bzd' || s.id === 'stim') ? `<div class="wf-sub-extra">
+        ${on && (s.id === 'aud' || s.id === 'oud' || s.id === 'bzd' || s.id === 'stim' || s.id === 'inh' || s.id === 'hal') ? `<div class="wf-sub-extra">
           ${s.id === 'aud'
             ? `<label class="wf-inline">Standard drinks per day <input type="number" min="0" max="200" step="any" inputmode="decimal" class="wf-num" data-drinks="1" value="${S.drinks ?? ''}" placeholder="—"></label>${DRINK_REF}`
             : ''}
           ${s.id === 'oud' ? `<div class="wf-mini wf-muted">Opioid types used:</div>${check('root', 'fentanyl', 'Fentanyl / high-potency synthetic opioids')}${check('root', 'pills', 'Prescription opioid pills (e.g., Norco, Vicodin)')}${check('root', 'methadoneUse', 'Methadone (prescribed or illicit)')}${check('root', 'kratom', 'Kratom')}${check('root', 'sevenOH', 'High-potency kratom derivatives (e.g., 7-OH)')}` : ''}
           ${s.id === 'bzd' ? `<div class="wf-mini wf-muted">Benzodiazepine types used:</div>${BZ_TYPES.map(([k, l]) => check('bz', k, l)).join('')}` : ''}
           ${s.id === 'stim' ? `<div class="wf-mini wf-muted">Stimulant types used:</div>${ST_TYPES.map(([k, l]) => check('st', k, l)).join('')}` : ''}
+          ${s.id === 'inh' ? `<div class="wf-mini wf-muted">Inhalant types used:</div>${INH_TYPES.map(([k, l]) => check('inh', k, l)).join('')}` : ''}
+          ${s.id === 'hal' ? `<div class="wf-mini wf-muted">Types used:</div>${HAL_TYPES.map(([k, l]) => check('hal', k, l)).join('')}` : ''}
         </div>` : ''}
       </div>`;
     }).join('');
@@ -662,7 +687,7 @@
       ${GROUPS.map((g) => { const ls = p.lines.filter((l) => l.group === g); return ls.length ? `<div class="wf-group">${g}</div>${ls.map(planRow).join('')}` : ''; }).join('')}</div>`;
     if (p.avoid.size) html += `<div class="wf-card" style="border-left:3px solid #ef5350"><div class="wf-h" style="color:#ef5350">Avoid</div>${[...p.avoid].map(([m, why]) => `<div class="wf-av">${medChip(m, true)}<span>${esc(why.join('; '))}</span></div>`).join('')}</div>`;
     if (p.actions.length) html += `<div class="wf-card"><div class="wf-h">Actions &amp; monitoring</div>${p.actions.map((x) => itemHTML(x, 'var(--accent)')).join('')}</div>`;
-    html += `<div class="wf-card wf-pwlinks"><span class="wf-muted">Full pathways:</span> ${chosen().map((s) => `<button class="wf-link" data-pw="${s.pw}" style="color:${COL[s.id]}">${s.label} →</button>`).join('')}</div>`;
+    if (chosen().some((s) => s.pw)) html += `<div class="wf-card wf-pwlinks"><span class="wf-muted">Full pathways:</span> ${chosen().filter((s) => s.pw).map((s) => `<button class="wf-link" data-pw="${s.pw}" style="color:${COL[s.id]}">${s.label} →</button>`).join('')}</div>`;
     html += '<div class="wf-actions"><button class="wf-btn" id="wfCopy">Copy plan</button><button class="wf-btn ghost" id="wfPrint">Print</button><button class="wf-btn ghost danger" id="wfReset">Start new assessment</button></div>';
     return html;
   }
@@ -675,6 +700,8 @@
     if (S.subs.oud) { const ox = [S.fentanyl && 'fentanyl', S.pills && 'prescription pills', S.methadoneUse && 'methadone', S.kratom && 'kratom', S.sevenOH && '7-OH'].filter(Boolean); if (ox.length) L.push('Opioid types: ' + ox.join(', ')); }
     if (S.subs.bzd && bzChosen().length) L.push('Benzodiazepine types: ' + bzChosen().map(([, l]) => l).join('; '));
     if (S.subs.stim && stChosen().length) L.push('Stimulant types: ' + stChosen().map(([, l]) => l).join('; '));
+    if (S.subs.inh && typesOf(INH_TYPES, 'inh').length) L.push('Inhalant types: ' + typesOf(INH_TYPES, 'inh').map(([, l]) => l).join('; '));
+    if (S.subs.hal && typesOf(HAL_TYPES, 'hal').length) L.push('Hallucinogen / empathogen types: ' + typesOf(HAL_TYPES, 'hal').map(([, l]) => l).join('; '));
     L.push('Current MOUD: ' + ({ none: 'none', bup: 'buprenorphine', methadone: 'methadone', xrntx: 'XR-naltrexone' })[S.moud] + ' | Pregnancy: ' + ({ na: 'N/A', no: 'negative', yes: 'PREGNANT', unk: 'unknown — test pending' })[S.preg] + (S.older ? ' | Age ≥65' : ''));
     L.push('');
     L.push('ACUITY: ' + a.label.toUpperCase());
@@ -753,6 +780,7 @@
       if (g === 'subs' && !t.checked && k === 'aud') S.drinks = null;
       if (g === 'subs' && !t.checked && k === 'bzd') S.bz = {};
       if (g === 'subs' && !t.checked && k === 'stim') S.st = {};
+      if (g === 'subs' && !t.checked && (k === 'inh' || k === 'hal')) S[k] = {};
       if (k === 'renalSevere' && t.checked) S.f.renal = false;
       if (k === 'renal' && t.checked) S.f.renalSevere = false;
       render(true);

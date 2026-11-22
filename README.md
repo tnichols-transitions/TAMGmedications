@@ -60,7 +60,14 @@ Conversion tables live in the `OPIOIDS` and `BZDS` constants in `workflow.js`.
 
 ### Rule set
 
-Current: **v1.3 — approved by medical director.**
+Current: **v1.4 (draft) — pending medical director approval.**
+
+v1.4 changes: two new substance categories.
+- **Inhalants** — types: nitrous oxide (whippets), solvents/aerosols/fuels, alkyl nitrites (poppers). Nitrous oxide adds a vitamin B12 row (check B12, methylmalonic acid, homocysteine; replace per prescriber). Solvents add a sudden-cardiac-death / ECG / labs alert. Poppers add a methemoglobinemia and PDE5-inhibitor caution. No type selected prompts staff to identify the product. Inhalants are legal products and do not trigger the naloxone rule.
+- **Hallucinogens / empathogens** — types: psilocybin, LSD, MDMA, ketamine, other (DMT, mescaline). No FDA-approved medication; screen for HPPD, mood symptoms and persisting psychosis. MDMA adds a serotonin-syndrome caution with serotonergic medications; ketamine adds a bladder (ketamine cystitis) caution. Counts as illicit use for the naloxone rule.
+- Neither category has a Treatment Pathways page yet, so the plan's "Full pathways" links skip them.
+
+v1.3: approved by medical director.
 
 v1.3 changes: benzodiazepine types at intake (alprazolam/Xanax, lorazepam/Ativan, clonazepam/Klonopin, diazepam/Valium, temazepam/Restoril, Z-drugs, designer benzodiazepines such as flubromazolam, pressed/counterfeit pills). Designer agents: no conversion — the taper agent is dosed by observed withdrawal, with a seizure-monitoring / level-of-care alert. Designer or counterfeit pills: fentanyl-contamination caution (urine drug screen, test strips) and a naloxone kit even without opioid use. Stimulant types at intake (cocaine powder, cocaine rock, methamphetamine): the bupropion + naltrexone row notes that its evidence is for methamphetamine when only cocaine is selected, and the limited-evidence note shows only the options for the selected types. **Overdose prevention (one rule):** everyone using illicit substances — any opioid use or MOUD, any stimulant use, or street/counterfeit/designer benzodiazepines — gets a naloxone kit and fentanyl test strips in the treatment / discharge plan, with overdose-response education (plus tolerance counselling for opioids). Alcohol, cannabis and prescribed benzodiazepines alone do not trigger it. The Treatment Pathways tab carries the same item for stimulants and benzodiazepines. Intake also records standard drinks per day for alcohol (documentation only) and no longer asks hours since last use.
 
