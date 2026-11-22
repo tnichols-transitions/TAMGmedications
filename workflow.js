@@ -99,7 +99,7 @@
 
   /* ── State (in memory only) ── */
   const fresh = () => ({
-    step: 0, subs: {}, hrs: {}, drinks: null, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
+    step: 0, subs: {}, drinks: null, fentanyl: false, methadoneUse: false, pills: false, kratom: false, sevenOH: false, moud: 'none',
     preg: 'na', older: false, emerg: {}, review: {}, f: {}
   });
   let S = fresh();
@@ -169,11 +169,11 @@
           ? `<b>Continue XR-naltrexone</b> monthly injections if effective.${both}`
           : `<b>Continue current ${oplan === 'bup' ? 'buprenorphine' : 'methadone'}.</b> Verify last dose with the prescriber${oplan === 'methadone' ? ' / OTP (guest dosing if needed)' : ''} and avoid any interruption.${oplan === 'methadone' && f.cardiac ? ' <b>Cardiac:</b> QTc risk — ECG.' : ''}`, { status: 'continue' });
       } else if (oplan === 'bup') {
-        const low = S.fentanyl || S.methadoneUse, hrs = S.hrs.oud;
+        const low = S.fentanyl || S.methadoneUse;
         const waitH = S.methadoneUse ? '36–72' : S.fentanyl ? '24–72' : '12–24';
         let txt, st = 'start';
         if (low) txt = `<b>Start buprenorphine by low-dose (Bernese/micro) induction.</b> ${S.fentanyl ? 'Fentanyl' : 'Methadone'} exposure raises the risk of precipitated withdrawal with standard induction; low-dose induction overlaps with full agonist and does not require waiting for withdrawal.`;
-        else { st = 'cond'; txt = `<b>Start buprenorphine (standard induction)</b> once objective withdrawal is present — COWS ≥8–12 (many protocols begin at ≥8; others wait for ≥12) — and ~${waitH} h since last use${hrs ? ` (currently ${hrs} h)` : ''}. ${calc('cows', 'Score with the COWS calculator')}`; }
+        else { st = 'cond'; txt = `<b>Start buprenorphine (standard induction)</b> once objective withdrawal is present — COWS ≥8–12 (many protocols begin at ≥8; others wait for ≥12) — and ~${waitH} h since last use. ${calc('cows', 'Score with the COWS calculator')}`; }
         if (preg) txt += ' Buprenorphine or methadone are both recommended in pregnancy.';
         line('Maintenance', 'Opioid use disorder', ['Buprenorphine'], txt, { status: st, alts: [{ med: 'Methadone', text: `if buprenorphine fails or tolerance is very high; requires OTP enrollment${f.cardiac ? '; QTc risk — ECG' : ''}.` }] });
       } else if (oplan === 'methadone') {
@@ -379,10 +379,10 @@
       const on = !!S.subs[s.id], c = COL[s.id];
       return `<div class="wf-sub ${on ? 'on' : ''}" style="${on ? `border-color:${c};background:${c}14` : ''}">
         <label class="wf-sub-top"><input type="checkbox" data-g="subs" data-k="${s.id}" ${on ? 'checked' : ''}><span class="wf-dot" style="background:${c}"></span><span class="wf-sub-name">${s.label}</span></label>
-        ${on ? `<div class="wf-sub-extra">
+        ${on && (s.id === 'aud' || s.id === 'oud') ? `<div class="wf-sub-extra">
           ${s.id === 'aud'
             ? `<label class="wf-inline">Standard drinks per day <input type="number" min="0" max="200" step="any" inputmode="decimal" class="wf-num" data-drinks="1" value="${S.drinks ?? ''}" placeholder="—"></label>${DRINK_REF}`
-            : `<label class="wf-inline">Hours since last use <input type="number" min="0" max="2000" inputmode="numeric" class="wf-num" data-hrs="${s.id}" value="${S.hrs[s.id] ?? ''}" placeholder="—"></label>`}
+            : ''}
           ${s.id === 'oud' ? `<div class="wf-mini wf-muted">Opioid types used:</div>${check('root', 'fentanyl', 'Fentanyl / high-potency synthetic opioids')}${check('root', 'pills', 'Prescription opioid pills (e.g., Norco, Vicodin)')}${check('root', 'methadoneUse', 'Methadone (prescribed or illicit)')}${check('root', 'kratom', 'Kratom')}${check('root', 'sevenOH', 'High-potency kratom derivatives (e.g., 7-OH)')}` : ''}
         </div>` : ''}
       </div>`;
@@ -638,7 +638,7 @@
     const a = acuity(), L = [];
     L.push('MEDICATION TREATMENT PLAN (TAMG Clinical Workflow)');
     L.push('Generated: ' + new Date().toLocaleString());
-    L.push('Substances: ' + (chosen().map((s) => s.label + (s.id === 'aud' ? (S.drinks != null ? ` (~${S.drinks} standard drinks/day)` : '') : S.hrs[s.id] ? ` (last use ~${S.hrs[s.id]} h)` : '')).join('; ') || 'none selected'));
+    L.push('Substances: ' + (chosen().map((s) => s.label + (s.id === 'aud' && S.drinks != null ? ` (~${S.drinks} standard drinks/day)` : '')).join('; ') || 'none selected'));
     if (S.subs.oud) { const ox = [S.fentanyl && 'fentanyl', S.pills && 'prescription pills', S.methadoneUse && 'methadone', S.kratom && 'kratom', S.sevenOH && '7-OH'].filter(Boolean); if (ox.length) L.push('Opioid types: ' + ox.join(', ')); }
     L.push('Current MOUD: ' + ({ none: 'none', bup: 'buprenorphine', methadone: 'methadone', xrntx: 'XR-naltrexone' })[S.moud] + ' | Pregnancy: ' + ({ na: 'N/A', no: 'negative', yes: 'PREGNANT', unk: 'unknown — test pending' })[S.preg] + (S.older ? ' | Age ≥65' : ''));
     L.push('');
@@ -715,7 +715,7 @@
     if (t.matches('input[type=checkbox][data-g]')) {
       const g = t.dataset.g, k = t.dataset.k;
       if (g === 'root') S[k] = t.checked; else S[g][k] = t.checked;
-      if (g === 'subs' && !t.checked) { delete S.hrs[k]; if (k === 'aud') S.drinks = null; }
+      if (g === 'subs' && !t.checked && k === 'aud') S.drinks = null;
       if (k === 'renalSevere' && t.checked) S.f.renal = false;
       if (k === 'renal' && t.checked) S.f.renalSevere = false;
       render(true);
@@ -724,7 +724,6 @@
   function onInput(e) {
     const t = e.target;
     if (t.matches('input[data-drinks]')) { const v = t.value.trim(); S.drinks = v === '' || !(+v >= 0) ? null : Math.round(+v * 10) / 10; }
-    if (t.matches('input[data-hrs]')) { const v = t.value.trim(); if (v === '') delete S.hrs[t.dataset.hrs]; else S.hrs[t.dataset.hrs] = Math.max(0, Math.round(+v)); }
   }
 
   /* ── Cross-links into the existing site ── */
