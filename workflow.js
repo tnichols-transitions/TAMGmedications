@@ -20,7 +20,7 @@
     { id: 'inh', label: 'Inhalants', pw: 'inh' },
     { id: 'hal', label: 'Hallucinogens / empathogens', pw: 'hal' }
   ];
-  const RULESET = 'Rule set v1.4 — approved by medical director';
+  const RULESET = 'Rule set v1.5 (draft) — pending medical director approval';
   const STEPS = ['Intake', 'Safety & history', 'Treatment plan'];
   const LAST = STEPS.length - 1;
 
@@ -315,6 +315,7 @@
     /* 7 ─ Cannabis */
     if (sub.can) {
       act('info', '<b>Cannabis withdrawal:</b> irritability, insomnia, reduced appetite, cravings — peaks days 2–6, mostly resolves in 1–2 weeks. Psychosocial core: MET, CBT, contingency management.');
+      line('Maintenance', 'Cannabis craving / anxiety (off-label)', ['N-acetylcysteine (NAC)'], '<b>N-acetylcysteine (NAC) 1200 mg twice daily</b> — glutamate modulator for craving and anxiety. Reduced cannabis use in adolescents and young adults (not confirmed in adults). Well tolerated; GI upset is most common.', { status: 'cond' });
       line('Symptom relief', 'Cannabinoid hyperemesis (if cyclic vomiting)', ['Capsaicin'], 'Topical capsaicin; haloperidol/droperidol in ED settings. Abstinence is the definitive treatment.', { status: 'prn' });
     }
 

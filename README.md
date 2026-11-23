@@ -41,7 +41,7 @@ The treatment plan is **one plan for the whole patient**, not one per substance.
 
 A final consistency pass guarantees that a drug on the Avoid list never appears in the plan, and that each drug is listed only once. Plan rows are grouped as Withdrawal, Maintenance, Co-occurring, Symptom relief, and Safety & nutrition; each row is tagged Start, Continue, Prescriber decision or As needed, with alternatives beneath it.
 
-- Rule-based decision support only; no doses are given.
+- Rule-based decision support only; no doses are given, except where the medical director has specified one (NAC 1200 mg twice daily for cannabis).
 - Nothing entered is stored or transmitted; state lives in memory and clears on reload.
 - Medication names link into the Medication Reference tab; the "Full pathways" links open the matching Treatment Pathway.
 
@@ -60,7 +60,11 @@ Conversion tables live in the `OPIOIDS` and `BZDS` constants in `workflow.js`.
 
 ### Rule set
 
-Current: **v1.4 — approved by medical director.**
+Current: **v1.5 (draft) — pending medical director approval.**
+
+v1.5 changes: cannabis plans add N-acetylcysteine (NAC) 1200 mg twice daily (off-label) for craving and anxiety, marked Prescriber decision; the Cannabis pathway's NAC entries (phases 2 and 5) give the same dose and purpose.
+
+v1.4: approved by medical director.
 
 v1.4 changes: two new substance categories.
 - **Inhalants** — types: nitrous oxide (whippets), solvents/aerosols/fuels, alkyl nitrites (poppers). Nitrous oxide adds a vitamin B12 row (check B12, methylmalonic acid, homocysteine; replace per prescriber). Solvents add a sudden-cardiac-death / ECG / labs alert. Poppers add a methemoglobinemia and PDE5-inhibitor caution. No type selected prompts staff to identify the product. Inhalants are legal products and do not trigger the naloxone rule.
