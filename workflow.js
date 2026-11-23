@@ -20,7 +20,7 @@
     { id: 'inh', label: 'Inhalants', pw: 'inh' },
     { id: 'hal', label: 'Hallucinogens / empathogens', pw: 'hal' }
   ];
-  const RULESET = 'Rule set v1.4 (draft) — pending medical director approval';
+  const RULESET = 'Rule set v1.4 — approved by medical director';
   const STEPS = ['Intake', 'Safety & history', 'Treatment plan'];
   const LAST = STEPS.length - 1;
 

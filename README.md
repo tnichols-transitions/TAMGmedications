@@ -60,7 +60,7 @@ Conversion tables live in the `OPIOIDS` and `BZDS` constants in `workflow.js`.
 
 ### Rule set
 
-Current: **v1.4 (draft) — pending medical director approval.**
+Current: **v1.4 — approved by medical director.**
 
 v1.4 changes: two new substance categories.
 - **Inhalants** — types: nitrous oxide (whippets), solvents/aerosols/fuels, alkyl nitrites (poppers). Nitrous oxide adds a vitamin B12 row (check B12, methylmalonic acid, homocysteine; replace per prescriber). Solvents add a sudden-cardiac-death / ECG / labs alert. Poppers add a methemoglobinemia and PDE5-inhibitor caution. No type selected prompts staff to identify the product. Inhalants are legal products and do not trigger the naloxone rule.
