@@ -366,6 +366,18 @@
     if (f.insomnia || sub.stim || sub.can || sub.bzd) line('Symptom relief', 'Sleep', ['Trazodone'], `${f.insomnia ? 'Sleep hygiene / CBT-I first; then ' : ''}<b>trazodone</b> at bedtime as needed.`, { status: 'prn', alts: [{ med: 'Mirtazapine', text: 'if appetite is also low.' }].concat(sub.bzd ? [{ med: 'Melatonin', text: 'mild option.' }] : []) });
     if (sub.aud || sub.can || sub.bzd) line('Symptom relief', 'Withdrawal symptoms, sleep, anxiety (off-label)', ['Gabapentin'], `<b>Gabapentin</b> adjunct.${opioid ? ' <b>Misuse risk with opioid use</b> — monitor closely.' : ''}${renalAny ? ' Renal dose adjustment required.' : ''}`, { status: opioid || renalAny ? 'cond' : 'prn' });
 
+    /* 10 ─ Craving: naltrexone for every substance unless contraindicated */
+    if (!avoid.has('Naltrexone')) {
+      const offLabel = chosen().filter((x) => x.id !== 'aud' && x.id !== 'oud').map((x) => x.label.toLowerCase());
+      const ntxLine = lines.find((l) => l.meds.includes('Naltrexone'));
+      const cautions = `${f.liver ? ' <b>Liver disease:</b> check LFTs; avoid in acute hepatitis or liver failure.' : ' Check LFTs.'}${preg ? ' <b>Pregnancy:</b> weigh risk and benefit with OB.' : ''}${sub.oud && !antagonist ? ' Requires 7–10 opioid-free days first.' : ''}`;
+      if (ntxLine) {
+        if (offLabel.length) ntxLine.text += ` <b>Also used for craving</b> (off-label for ${offLabel.join(', ')}).`;
+      } else if (offLabel.length) {
+        line('Maintenance', 'Craving (off-label)', ['Naltrexone'], `<b>Naltrexone</b> for craving — off-label for ${offLabel.join(', ')}${sub.aud ? '; FDA-approved for alcohol use disorder' : ''}. Oral daily or monthly injectable. Never with buprenorphine, methadone or opioid pain medication.${cautions}`, { status: 'cond' });
+      }
+    }
+
     /* Consistency pass: an avoided drug never appears in the plan; each drug is listed once. */
     const placed = new Set(), altSeen = new Set();
     lines.forEach((l) => { l.meds = l.meds.filter((m) => !avoid.has(m) && !placed.has(m)); l.meds.forEach((m) => placed.add(m)); });
