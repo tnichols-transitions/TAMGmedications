@@ -62,7 +62,7 @@ Conversion tables live in the `OPIOIDS` and `BZDS` constants in `workflow.js`.
 
 Current: **v1.5 (draft) — pending medical director approval.**
 
-v1.5 changes: cannabis plans add N-acetylcysteine (NAC) 1200 mg twice daily (off-label) for craving and anxiety, marked Prescriber decision; the Cannabis pathway's NAC entries (phases 2 and 5) give the same dose and purpose.
+v1.5 changes: cannabis plans add N-acetylcysteine (NAC) 1200 mg twice daily (off-label) for craving and anxiety, marked Prescriber decision; the Cannabis pathway's NAC entries (phases 2 and 5) give the same dose and purpose. The Medication Reference adds an NAC card under a new **Cannabis Use Disorder** category and filter; the workflow's NAC chip links to it.
 
 v1.4: approved by medical director.
 

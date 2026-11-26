@@ -141,6 +141,7 @@ input[type=search]::placeholder{color:var(--text-muted);}
         <button class="pill" data-filter="withdrawal">Withdrawal</button>
         <button class="pill" data-filter="opioid">Opioid Use</button>
         <button class="pill" data-filter="alcohol">Alcohol Use</button>
+        <button class="pill" data-filter="cannabis">Cannabis Use</button>
         <button class="pill" data-filter="antidepressant">Antidepressants</button>
         <button class="pill" data-filter="mood">Mood Stabilizers</button>
         <button class="pill" data-filter="antipsychotic">Antipsychotics</button>
@@ -1251,9 +1252,10 @@ function togglePhase(header) {
 }
 
 /* ── Medication reference ── */
-const CATEGORIES={withdrawal:{label:'Withdrawal Mgmt',color:'#4fc3f7'},opioid:{label:'Opioid Use Disorder',color:'#81c995'},alcohol:{label:'Alcohol Use Disorder',color:'#ffb74d'},antidepressant:{label:'Antidepressant',color:'#ce93d8'},mood:{label:'Mood Stabilizer',color:'#f48fb1'},antipsychotic:{label:'Antipsychotic',color:'#80cbc4'},'sleep-anxiety':{label:'Sleep / Anxiety',color:'#90caf9'}};
-const ORDER=['withdrawal','opioid','alcohol','antidepressant','mood','antipsychotic','sleep-anxiety'];
+const CATEGORIES={withdrawal:{label:'Withdrawal Mgmt',color:'#4fc3f7'},opioid:{label:'Opioid Use Disorder',color:'#81c995'},alcohol:{label:'Alcohol Use Disorder',color:'#ffb74d'},cannabis:{label:'Cannabis Use Disorder',color:'#a5d6a7'},antidepressant:{label:'Antidepressant',color:'#ce93d8'},mood:{label:'Mood Stabilizer',color:'#f48fb1'},antipsychotic:{label:'Antipsychotic',color:'#80cbc4'},'sleep-anxiety':{label:'Sleep / Anxiety',color:'#90caf9'}};
+const ORDER=['withdrawal','opioid','alcohol','cannabis','antidepressant','mood','antipsychotic','sleep-anxiety'];
 const MEDS=[
+{name:'N-acetylcysteine (NAC)',brand:'Acetadote (IV) · Mucomyst · OTC oral supplement',cat:'cannabis',mechanism:'Cysteine prodrug that restores the cystine–glutamate exchanger in the nucleus accumbens, normalizing glutamate signaling disrupted by chronic drug use. Also replenishes glutathione (antioxidant).',purpose:'Off-label for cannabis use disorder: <b>1200 mg twice daily</b> for craving and anxiety. Reduced cannabis use in adolescents and young adults; not confirmed in an adult trial.',uses:['Cannabis use disorder — craving (off-label)','Anxiety in cannabis use disorder (off-label)','Acetaminophen overdose (FDA-approved, IV/oral)','Mucolytic (inhaled)'],warn:'Generally well tolerated — GI upset (nausea, diarrhea) is most common; sulfur odor. Caution in asthma (bronchospasm, mainly with the inhaled form). Over-the-counter supplements vary in quality.'},
 {name:'Diazepam',brand:'Valium',cat:'withdrawal',mechanism:'Positive allosteric modulator of GABA-A receptors — enhances inhibitory neurotransmission, reducing CNS hyperexcitability.',purpose:'First-line for alcohol and sedative withdrawal; prevents seizures and delirium tremens.',uses:['Alcohol withdrawal','Benzodiazepine withdrawal','Seizure prophylaxis'],warn:'Abuse potential; monitor closely in SUD settings. Long half-life reduces breakthrough symptoms.'},
 {name:'Lorazepam',brand:'Ativan',cat:'withdrawal',mechanism:'GABA-A positive allosteric modulator. Shorter half-life than diazepam; no active metabolites — preferred in hepatic impairment.',purpose:'Alcohol and sedative withdrawal management; preferred when liver function is compromised.',uses:['Alcohol withdrawal','Hepatic impairment patients','Acute agitation'],warn:'Higher abuse potential than longer-acting agents. Risk of cumulative sedation with repeat dosing.'},
 {name:'Clonazepam',brand:'Klonopin',cat:'withdrawal',mechanism:'GABA-A positive allosteric modulator with a long half-life (30–40 hrs) — smooth plasma levels support gradual dose reduction.',purpose:'Alternative long-acting agent for benzodiazepine taper when diazepam is not suitable.',uses:['Benzodiazepine taper','Panic disorder','Seizure disorders'],warn:'Abuse potential; monitor closely in SUD settings. Additive respiratory depression with opioids and alcohol.'},
